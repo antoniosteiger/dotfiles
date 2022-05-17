@@ -22,7 +22,8 @@ window {
     border:                         0;
     padding:                        10;
     transparency:                   "real";
-    width:                          170px;
+    width:                          320px;
+    height:			    400px;
     location:                       east;
     /*y-offset:                       18;*/
     /*x-offset:	                    850;*/
