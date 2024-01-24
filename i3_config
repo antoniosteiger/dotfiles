@@ -39,18 +39,12 @@ bindsym $mod+d exec rofi -modi drun -show drun -dpi 1  \
 bindsym $mod+Tab exec rofi -show window -dpi 1 \
 		-config ~/.config/rofi/rofidmenu.rasi
 
-# launch categorized menu
-bindsym $mod+z exec --no-startup-id morc_menu
+# Rofi Audio Sink Select
+bindsym $mod+a exec ~/code/dotfiles/scripts/rofi-pulseaudio-select-sink.sh
 
-################################################################################################
-## sound-section - DO NOT EDIT if you wish to automatically upgrade Alsa -> Pulsen later! ##
-################################################################################################
-
-##exec --no-startup-id volumeicon
-##bindsym $mod+Ctrl+m exec terminal -e 'alsamixer'
-exec --no-startup-id start-pulseaudio-x11
+# Control audio volume & show volume tray icon
 exec --no-startup-id pa-applet
-bindsym $mod+Ctrl+m exec pavucontrol
+exec --no-startup-id start-pulseaudio-x11
 
 
 
@@ -71,7 +65,7 @@ bindsym $mod+F5 exec terminal -e 'mocp'
 bindsym $mod+t exec --no-startup-id pkill picom
 # bindsym $mod+Ctrl+t exec --no-startup-id picom -b
 bindsym $mod+Shift+d --release exec "killall dunst; exec notify-send 'restart dunst'"
-bindsym Print exec --no-startup-id i3-scrot
+bindsym Print exec --no-startup-id shutter
 bindsym $mod+Print --release exec --no-startup-id i3-scrot -w
 bindsym $mod+Shift+Print --release exec --no-startup-id i3-scrot -s
 bindsym $mod+Shift+h exec xdg-open /usr/share/doc/manjaro/i3_help.pdf
@@ -131,7 +125,7 @@ bindsym $mod+space focus mode_toggle
 bindsym $mod+Shift+s sticky toggle
 
 # focus the parent container
-bindsym $mod+a focus parent
+# bindsym $mod+a focus parent
 
 # move the currently focused window to the scratchpad
 bindsym $mod+Shift+minus move scratchpad
@@ -270,11 +264,11 @@ bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcu
 #     bindsym Return mode "default"
 #     bindsym Escape mode "default"
 # }
-bindsym $mod+Shift+q exec ~/Documents/linux_essentials/scripts/powermenu
+bindsym $mod+Shift+q exec ~/code/dotfiles/scripts/powermenu
 
 # Power Profiles Menu Switcher
 # Requires power-profiles-daemon
-bindsym $mod+Shift+p exec ~/Documents/linux_essentials/scripts/power-profiles
+bindsym $mod+Shift+p exec ~/code/dotfiles/scripts/power-profiles
 
 
 # Resize window (you can also use the mouse for that)
