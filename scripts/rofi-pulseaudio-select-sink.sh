@@ -33,7 +33,7 @@ select_sink() {
     done <<< "$raw_sinks"
     
     sink="$(echo -e "$sinks" | rofi -dmenu -dpi 1 -config "~/.config/rofi/powermenu.rasi" \
-        -p "Select Audio Source")" || return 1
+        -p "Select Audio Source" -no-fixed-num-lines)" || return 1
     sink="$(echo "$sink" | cut -f 1 -d " ")"
     [ -n "$sink" ] || return 1
 
