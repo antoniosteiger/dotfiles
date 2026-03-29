@@ -185,7 +185,7 @@
     vscode
     gaphor # for quick SysML diagrams
     nix-search-cli # for quick nix pckgs search in cli
-    grim
+    grimblast # Needed because grim puts gray border around screenshots
     slurp
     pdfpc # presenter view with speaker notes and timer for PDFs
     polylux2pdfpc # Extract pdfpc data from polylux based typst projects
