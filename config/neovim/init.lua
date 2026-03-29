@@ -388,7 +388,7 @@ vim.lsp.enable("tinymist")
 vim.lsp.config("tinymist", {
 	capabilities = capabilities,
 	settings = {
-		exportPdf = "onSave",
+		-- exportPdf = "onSave",
 	},
 })
 
