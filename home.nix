@@ -1,8 +1,16 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  hostType ? "desktop",
+  ...
+}:
 
 let
   dotfiles = "${config.home.homeDirectory}/dotfiles/config";
   create_symlink = path: config.lib.file.mkOutOfStoreSymlink path;
+
+  # Determine which host-specific Hyprland config to use
+  hyprHostConfig = if hostType == "laptop" then "host-laptop.conf" else "host-desktop.conf";
 in
 {
   home.username = "toni";
@@ -12,7 +20,12 @@ in
   # home.packages = with pkgs; [
   # ];
 
-  xdg.configFile."hypr".source = create_symlink "${dotfiles}/hypr";
+  xdg.configFile."hypr/hypridle.conf".source = create_symlink "${dotfiles}/hypr/hypridle.conf";
+  xdg.configFile."hypr/hyprland.conf".source = create_symlink "${dotfiles}/hypr/hyprland.conf";
+  xdg.configFile."hypr/hyprlock.conf".source = create_symlink "${dotfiles}/hypr/hyprlock.conf";
+  xdg.configFile."hypr/hyprpaper.conf".source = create_symlink "${dotfiles}/hypr/hyprpaper.conf";
+  xdg.configFile."hypr/host-specific.conf".source =
+    create_symlink "${dotfiles}/hypr/${hyprHostConfig}";
   xdg.configFile."hyprpanel".source = create_symlink "${dotfiles}/hyprpanel";
   xdg.configFile."zsh/.zshrc".source = create_symlink "${dotfiles}/zsh/.zshrc";
   xdg.configFile.".p10k.zsh".source = create_symlink "${dotfiles}/p10k/.p10k.zsh";

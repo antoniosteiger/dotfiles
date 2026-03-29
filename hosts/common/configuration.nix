@@ -6,10 +6,6 @@
 }:
 
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
-
   system.stateVersion = "25.11"; # Never change
 
   boot.loader.efi.canTouchEfiVariables = true;
@@ -46,15 +42,8 @@
     options = "--delete-older-than 10d";
   };
 
-  networking.hostName = "tonix";
-
   networking.firewall = {
     enable = false;
-    # Below is for Gazebo; TODO: remove this
-    # extraCommands = ''
-    #   iptables -A INPUT -d 224.0.0.0/4 -j ACCEPT
-    #   iptables -A OUTPUT -d 224.0.0.0/4 -j ACCEPT
-    # '';
   };
 
   nix.settings.experimental-features = [
@@ -63,7 +52,6 @@
   ];
 
   networking.networkmanager.enable = true;
-  powerManagement.enable = true;
 
   # Language and Timezone
   time.timeZone = "Europe/Berlin";
@@ -79,22 +67,6 @@
   };
 
   services.gvfs.enable = true;
-
-  security.pam.services.gdm = {
-    text = ''
-      auth sufficient pam_fprintd.so
-    '';
-  };
-
-  services.udev.extraHwdb = ''
-    evdev:name:ThinkPad Extra Buttons:dmi:bvn*:bvr*:bd*:svnLENOVO*:pn*
-     KEYBOARD_KEY_1bd=phone
-     KEYBOARD_KEY_9c=favorites
-  '';
-
-  powerManagement.powerDownCommands = ''
-    ${pkgs.systemd}/bin/systemctl stop fprintd.service 2>/dev/null || true
-  ''; # work around fprintd suspend bug
 
   security.pam.services.hyprlock = { };
 
@@ -133,8 +105,6 @@
     pulse.enable = true;
   };
 
-  # services.gvfs.enable = true; # needed for spotify album covers in swaync mpris
-
   users.defaultUserShell = pkgs.zsh;
   users.users.toni = {
     isNormalUser = true;
@@ -143,14 +113,11 @@
       "networkmanager"
       "docker"
       "input"
-    ]; # Enable ‘sudo’ for the user.
-    # packages = with pkgs; [
-    # ];
+    ]; # Enable 'sudo' for the user.
   };
 
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
-    brightnessctl
     wget
     git
     git-lfs
@@ -159,7 +126,6 @@
     hyprlock
     hypridle
     hyprpaper
-    # swaynotificationcenter
     capitaine-cursors-themed # replace hyprland cursor with gruvbox themed cursor.
     zsh-powerlevel10k # Shell prompt. Supports transient prompts. Starship didn't work with transient.
     imagemagick
@@ -200,7 +166,6 @@
     stylua # lua formatter
     ruff # python formatter and linter
     pyrefly # python language server
-    ruff # Python formatter
     rust-analyzer # rust language server
     rustfmt # Rust formatter
     nodejs_24 # JS runtime old for compatibility
@@ -234,11 +199,7 @@
     dejavu_fonts
   ];
 
-  services.upower.enable = true; # used to get battery info
-  # services.fwupd.enable = true; # firmware updates, needed so rarely, use nix-shell
   services.udisks2.enable = true; # auto mounting external drives
-  services.libinput.enable = true; # touchpad stuff
-  services.libinput.touchpad.tapping = true;
 
   programs.gnupg.agent = {
     enable = true;
@@ -250,7 +211,7 @@
   stylix = {
     enable = true;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-medium.yaml";
-    image = ./backgrounds/mojave.jpg;
+    image = ../../backgrounds/mojave.jpg;
     autoEnable = true;
   };
 

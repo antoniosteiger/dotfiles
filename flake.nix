@@ -29,7 +29,7 @@
       nixosConfigurations.lenovo_t14s_gen2 = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
-          ./configuration.nix
+          ./hosts/lenovo_t14s_gen2/configuration.nix
           nixos-hardware.nixosModules.lenovo-thinkpad-t14-amd-gen2
           home-manager.nixosModules.home-manager
           {
@@ -38,6 +38,29 @@
               useUserPackages = true;
               users.toni = import ./home.nix;
               backupFileExtension = "backup";
+              extraSpecialArgs = {
+                hostType = "laptop";
+              };
+            };
+          }
+          stylix.nixosModules.stylix
+        ];
+      };
+
+      nixosConfigurations.arcticbox = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          ./hosts/arcticbox/configuration.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              users.toni = import ./home.nix;
+              backupFileExtension = "backup";
+              extraSpecialArgs = {
+                hostType = "desktop";
+              };
             };
           }
           stylix.nixosModules.stylix
