@@ -122,10 +122,11 @@
     git
     git-lfs
     pulseaudio
-    hyprpanel
-    hyprlock
-    hypridle
-    hyprpaper
+    hyprpanel # bar
+    hyprlock # locking
+    hypridle # screen locking on idle
+    hyprpaper # wallpaper
+    hyprpicker # color pipette
     capitaine-cursors-themed # replace hyprland cursor with gruvbox themed cursor.
     zsh-powerlevel10k # Shell prompt. Supports transient prompts. Starship didn't work with transient.
     imagemagick
