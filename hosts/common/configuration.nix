@@ -212,7 +212,7 @@
   stylix = {
     enable = true;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-medium.yaml";
-    image = ../../backgrounds/mojave.jpg;
+    image = ../../backgrounds/artemis2_lunar_flyby_eclipse_integrity.jpg;
     autoEnable = true;
   };
 
