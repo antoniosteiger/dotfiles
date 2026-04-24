@@ -186,6 +186,7 @@
     xhost # let containers open windows
     claude-code
     ltex-ls-plus # spell checking in nvim
+    localsend # local network file sharing
   ];
 
   virtualisation.docker.enable = true;
