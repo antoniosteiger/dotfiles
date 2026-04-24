@@ -43,5 +43,6 @@
   # Laptop-specific: Brightness control
   environment.systemPackages = with pkgs; [
     brightnessctl
+    steam
   ];
 }
