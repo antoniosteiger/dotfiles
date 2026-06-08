@@ -188,7 +188,6 @@
     claude-code
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
-    rustdesk # remote desktop
   ];
 
   virtualisation.docker.enable = true;
