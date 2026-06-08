@@ -158,6 +158,7 @@
     polylux2pdfpc # Extract pdfpc data from polylux based typst projects
     usbutils # lsusb & co.
     unzip
+    unrar
     gcc
     ripgrep
     fd

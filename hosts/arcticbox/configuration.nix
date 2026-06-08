@@ -15,7 +15,7 @@
   powerManagement.enable = false;
 
   environment.systemPackages = with pkgs; [
-
+    blender
   ];
 
   programs.steam = {
