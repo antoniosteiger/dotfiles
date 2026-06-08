@@ -188,6 +188,7 @@
     claude-code
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
+    anydesk # remote access
   ];
 
   virtualisation.docker.enable = true;
