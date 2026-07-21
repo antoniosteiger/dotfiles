@@ -146,7 +146,7 @@
     curl
     calcurse # calendar
     aerc # mail
-    neofetch
+    fastfetch
     onlyoffice-desktopeditors
     mattermost-desktop
     gimp2 # for image editing
