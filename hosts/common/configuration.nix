@@ -136,7 +136,6 @@
     imagemagick
     ghostscript # to convert pdf to images using imagemagick
     ffmpeg
-    bitwarden-desktop
     wl-clipboard
     typst
     tinymist
