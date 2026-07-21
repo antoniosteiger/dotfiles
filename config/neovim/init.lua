@@ -536,15 +536,25 @@ statusline.section_location = function()
 	return "%2l:%-2v"
 end
 
--- Treesitter
-require("nvim-treesitter.configs").setup({
-	auto_install = false,
-	highlight = {
-		enable = true,
-		additional_vim_regex_highlighting = { "ruby" },
-	},
-	indent = { enable = true, disable = { "ruby" } },
+-- treesitter
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "*" },
+	callback = function()
+		-- Liste von Dateitypen, die Treesitter ignorieren soll
+		local ignore_ft = { "neo-tree", "NvimTree", "TelescopePrompt", "checkhealth", "help", "qf" }
+
+		if vim.tbl_contains(ignore_ft, vim.bo.filetype) then
+			return
+		end
+
+		-- Versuche Treesitter sicher zu starten (fängt Fehler ab, falls ein Parser fehlt)
+		pcall(vim.treesitter.start)
+	end,
 })
+
+-- treesitter indents
+vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+vim.o.foldenable = false
 
 -- Autopairs
 require("nvim-autopairs").setup({})

@@ -2,6 +2,7 @@
   # config,
   # lib,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -63,8 +64,8 @@
 
   services.displayManager.gdm = {
     enable = true;
-    wayland = true;
   };
+  services.displayManager.defaultSession = "hyprland-uwsm";
 
   services.gvfs.enable = true;
 
@@ -91,6 +92,7 @@
 
   programs.hyprland = {
     enable = true;
+    withUWSM = true; # returns to GDM immediately otherwise
     xwayland.enable = true;
   };
 

@@ -16,6 +16,7 @@
 
   environment.systemPackages = with pkgs; [
     blender
+    pi-coding-agent
   ];
 
   programs.steam = {

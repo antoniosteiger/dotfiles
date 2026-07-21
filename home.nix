@@ -32,6 +32,14 @@ in
   xdg.configFile."sioyek".source = create_symlink "${dotfiles}/sioyek";
   # xdg.configFile."nvim/init.lua".source = create_symlink "${dotfiles}/neovim/init.lua";
 
+  # pi coding agent — managed config. Uses home.file (not xdg.configFile) because pi
+  # reads from ~/.pi/agent/ and ~/.agents/, not ~/.config/. auth.json and runtime
+  # caches (models-store.json, npm/, sessions/, ~/.agents/.skill-lock.json) stay in
+  # place, unmanaged.
+  home.file.".pi/agent/settings.json".source = create_symlink "${dotfiles}/pi/settings.json";
+  home.file.".pi/agent/extensions".source = create_symlink "${dotfiles}/pi/extensions";
+  home.file.".agents/skills".source = create_symlink "${dotfiles}/pi/skills";
+
   stylix.fonts = {
     monospace = {
       package = pkgs.nerd-fonts.jetbrains-mono;
@@ -50,6 +58,7 @@ in
   programs.firefox = {
     # only browser where screen sharing works well and can be configured declaratively
     enable = true;
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
     # Policies
     policies = {
       DisableTelemetry = true;
@@ -180,10 +189,13 @@ in
         p.tree-sitter-c
       ]))
     ];
-    extraLuaConfig = builtins.readFile ./config/neovim/init.lua;
+    initLua = builtins.readFile ./config/neovim/init.lua;
+    withPython3 = false;
+    withRuby = false;
   };
 
   stylix.targets.neovim.enable = false;
+  stylix.targets.firefox.profileNames = [ "Default" ];
 
   programs.btop.enable = true;
   programs.yazi.enable = true;
