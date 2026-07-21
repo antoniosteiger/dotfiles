@@ -45,6 +45,5 @@
     brightnessctl
     steam
     ollama
-    vllm
   ];
 }
