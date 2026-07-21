@@ -44,5 +44,7 @@
   environment.systemPackages = with pkgs; [
     brightnessctl
     steam
+    ollama
+    vllm
   ];
 }

@@ -115,6 +115,8 @@
       "networkmanager"
       "docker"
       "input"
+      "dialout"
+      "tty"
     ]; # Enable 'sudo' for the user.
   };
 

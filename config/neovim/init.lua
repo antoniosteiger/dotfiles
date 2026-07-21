@@ -482,6 +482,16 @@ require("conform").setup({
 	},
 })
 
+-- search and replace
+require("grug-far").setup({})
+-- color highlighting
+require("ccc").setup({
+	highlighter = {
+		auto_enable = true,
+		lsp = true,
+	},
+})
+
 vim.keymap.set("", "<leader>f", function()
 	require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "[F]ormat buffer" })

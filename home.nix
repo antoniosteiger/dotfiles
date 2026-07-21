@@ -101,6 +101,9 @@ in
 
       Preferences = {
         "browser.startup.homepage" = "https://google.com";
+        "dom.webgpu.enabled" = true;
+        "gfx.webgpu.force-enabled" = true;
+        "gfx.webrender.all" = true;
       };
     };
   };
@@ -143,11 +146,14 @@ in
       guess-indent-nvim
       gitsigns-nvim
       which-key-nvim
+      ccc-nvim
 
       # Fuzzy finder
       telescope-nvim
       telescope-fzf-native-nvim
       telescope-ui-select-nvim
+      # Replace
+      grug-far-nvim
 
       # Formatting
       conform-nvim
