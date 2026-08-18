@@ -1,6 +1,6 @@
 {
   # config,
-  # lib,
+  lib,
   pkgs,
   inputs,
   ...
@@ -17,7 +17,7 @@
   };
 
   boot.plymouth = {
-    enable = true;
+    enable = false; # takes too much boot time
   };
 
   boot = {
@@ -36,6 +36,9 @@
     # It will just not appear on screen unless a key is pressed
     loader.timeout = 0;
   };
+
+  systemd.services.NetworkManager-wait-online.enable = false;
+  services.fwupd.enable = true;
 
   nix.gc = {
     automatic = true;
@@ -113,7 +116,6 @@
     extraGroups = [
       "wheel"
       "networkmanager"
-      "docker"
       "input"
       "dialout"
       "tty"
@@ -186,14 +188,12 @@
     cameractrls-gtk4
     google-chrome # for compatibility and lighthouse
     playerctl # loaded by many media-control apps
-    docker-compose
     xhost # let containers open windows
-    claude-code
+    opencode
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
   ];
 
-  virtualisation.docker.enable = true;
   programs.xwayland.enable = true;
 
   programs.zsh.promptInit = "source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
