@@ -123,6 +123,9 @@
   };
 
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [
+    inputs.nur.overlays.default
+  ];
   environment.systemPackages = with pkgs; [
     wget
     git
@@ -134,7 +137,6 @@
     hyprpaper # wallpaper
     hyprpicker # color pipette
     capitaine-cursors-themed # replace hyprland cursor with gruvbox themed cursor.
-    zsh-powerlevel10k # Shell prompt. Supports transient prompts. Starship didn't work with transient.
     imagemagick
     ghostscript # to convert pdf to images using imagemagick
     ffmpeg
@@ -190,13 +192,28 @@
     playerctl # loaded by many media-control apps
     xhost # let containers open windows
     opencode
+    claude-code
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
+    obsidian
+    anytype
+    gcr # for anytype
+    nur.repos.lonerOrz.aerion
   ];
+
+  #1password:
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "toni" ];
+  };
+
+  # For anytype:
+  services.gnome.gnome-keyring.enable = true;
+  services.gnome.gcr-ssh-agent.enable = false;
 
   programs.xwayland.enable = true;
 
-  programs.zsh.promptInit = "source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
   programs.vim.enable = true;
   programs.vim.defaultEditor = true;
 

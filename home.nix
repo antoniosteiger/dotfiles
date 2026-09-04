@@ -28,7 +28,6 @@ in
     create_symlink "${dotfiles}/hypr/${hyprHostConfig}";
   xdg.configFile."hyprpanel".source = create_symlink "${dotfiles}/hyprpanel";
   xdg.configFile."zsh/.zshrc".source = create_symlink "${dotfiles}/zsh/.zshrc";
-  xdg.configFile.".p10k.zsh".source = create_symlink "${dotfiles}/p10k/.p10k.zsh";
   xdg.configFile."sioyek".source = create_symlink "${dotfiles}/sioyek";
   # xdg.configFile."nvim/init.lua".source = create_symlink "${dotfiles}/neovim/init.lua";
 
@@ -77,9 +76,9 @@ in
 
       # Extensions
       ExtensionSettings = {
-        # bitwarden extension
-        "{446900e4-71c2-419f-a6a7-df9c091e268b}" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/{446900e4-71c2-419f-a6a7-df9c091e268b}/latest.xpi";
+        # 1Password:
+        "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/{d634138d-c276-4fc8-924b-40a0ea21d284}/latest.xpi";
           installation_mode = "normal_installed";
         };
         # Vimium
@@ -114,6 +113,11 @@ in
     settings = {
       confirm-close-surface = false;
     };
+  };
+
+  programs.starship = {
+    enable = true;
+    settings = builtins.fromTOML (builtins.readFile ./config/starship/starship.toml);
   };
 
   programs.neovim = {
@@ -201,10 +205,14 @@ in
   };
 
   stylix.targets.neovim.enable = false;
+  stylix.targets.starship.enable = false;
   stylix.targets.firefox.profileNames = [ "Default" ];
 
   programs.btop.enable = true;
-  programs.yazi.enable = true;
+  programs.yazi = {
+    enable = true;
+    shellWrapperName = "y";
+  };
   programs.vicinae = {
     enable = true;
     settings = {

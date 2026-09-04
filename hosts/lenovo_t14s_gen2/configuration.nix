@@ -45,5 +45,6 @@
     brightnessctl
     steam
     ollama
+    antigravity
   ];
 }
