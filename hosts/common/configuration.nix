@@ -131,10 +131,10 @@
     git
     git-lfs
     pulseaudio
-    hyprpanel # bar
+    wayle # bar
+    awww # wallpaper engine for wayle
     hyprlock # locking
     hypridle # screen locking on idle
-    hyprpaper # wallpaper
     hyprpicker # color pipette
     capitaine-cursors-themed # replace hyprland cursor with gruvbox themed cursor.
     imagemagick
@@ -195,7 +195,6 @@
     claude-code
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
-    obsidian
     anytype
     gcr # for anytype
     nur.repos.lonerOrz.aerion

@@ -1,0 +1,104 @@
+[general]
+font-sans = "Host Grotesk"
+
+[bar]
+scale = 0.6000000238418579
+location = "bottom"
+background-opacity = 55
+
+[[bar.layout]]
+monitor = "*"
+show = true
+left = ["hyprland-workspaces"]
+center = ["cava"]
+right = [
+    "systray",
+    "idle-inhibit",
+    { name = "audio", modules = [
+    "volume",
+    "microphone",
+] },
+    { name = "connectivity", modules = [
+    "bluetooth",
+    "network",
+] },
+    { name = "resources", modules = [
+    "battery",
+    "ram",
+    "cpu",
+] },
+    "clock",
+]
+
+[styling]
+scale = 0.7599999904632568
+
+[styling.palette]
+bg = "#32302f"
+surface = "#3c3836"
+elevated = "#504945"
+fg = "#ebdbb2"
+fg-muted = "#d5c4a1"
+primary = "#83a598"
+red = "#fb4934"
+yellow = "#fabd2f"
+green = "#b8bb26"
+blue = "#8ec07c"
+
+[modules.battery]
+border-color = "status-info"
+icon-bg-color = "status-info"
+label-color = "status-info"
+
+[modules.bluetooth]
+icon-bg-color = "accent"
+label-color = "accent"
+
+[modules.cava]
+color = "fg-muted"
+border-color = "fg-muted"
+left-click = "dropdown:media"
+
+[modules.clock]
+icon-show = false
+
+[modules.hyprland-workspaces]
+min-workspace-count = 10
+monitor-specific = false
+app-icons-show = true
+active-color = "status-warning"
+
+[modules.idle-inhibit]
+border-color = "fg-muted"
+icon-bg-color = "fg-muted"
+label-show = false
+label-color = "fg-muted"
+
+[modules.microphone]
+icon-bg-color = "fg-muted"
+label-color = "fg-muted"
+
+[modules.notifications]
+popup-margin-x = 0.5
+popup-margin-y = 0.5
+
+[modules.ram]
+border-color = "status-info"
+icon-bg-color = "status-info"
+label-color = "status-info"
+
+[modules.volume]
+border-color = "fg-muted"
+icon-bg-color = "fg-muted"
+label-color = "fg-muted"
+
+[osd]
+border = false
+
+[wallpaper]
+transition-type = "fade"
+transition-duration = 1.0
+cycling-enabled = true
+cycling-directory = "/home/toni/dotfiles/backgrounds"
+cycling-mode = "shuffle"
+cycling-same-image = true

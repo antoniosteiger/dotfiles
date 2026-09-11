@@ -23,10 +23,9 @@ in
   xdg.configFile."hypr/hypridle.conf".source = create_symlink "${dotfiles}/hypr/hypridle.conf";
   xdg.configFile."hypr/hyprland.conf".source = create_symlink "${dotfiles}/hypr/hyprland.conf";
   xdg.configFile."hypr/hyprlock.conf".source = create_symlink "${dotfiles}/hypr/hyprlock.conf";
-  xdg.configFile."hypr/hyprpaper.conf".source = create_symlink "${dotfiles}/hypr/hyprpaper.conf";
   xdg.configFile."hypr/host-specific.conf".source =
     create_symlink "${dotfiles}/hypr/${hyprHostConfig}";
-  xdg.configFile."hyprpanel".source = create_symlink "${dotfiles}/hyprpanel";
+  xdg.configFile."wayle/config.toml".source = create_symlink "${dotfiles}/wayle/config.toml";
   xdg.configFile."zsh/.zshrc".source = create_symlink "${dotfiles}/zsh/.zshrc";
   xdg.configFile."sioyek".source = create_symlink "${dotfiles}/sioyek";
   # xdg.configFile."nvim/init.lua".source = create_symlink "${dotfiles}/neovim/init.lua";
@@ -212,7 +211,78 @@ in
   programs.yazi = {
     enable = true;
     shellWrapperName = "y";
+
+    plugins = with pkgs.yaziPlugins; {
+      smart-enter.package = smart-enter;
+      compress.package = compress;
+      clipboard.package = clipboard;
+    };
+
+    settings = {
+      # general yazi.toml config goes here (empty for now, unless you have other settings)
+    };
+
+    keymap = {
+      mgr.prepend_keymap = [
+        {
+          on = [
+            "c"
+            "a"
+            "a"
+          ];
+          run = "plugin compress";
+          desc = "Archive selected files";
+        }
+        {
+          on = [
+            "c"
+            "a"
+            "p"
+          ];
+          run = "plugin compress -p";
+          desc = "Archive selected files (password)";
+        }
+        {
+          on = [
+            "c"
+            "a"
+            "l"
+          ];
+          run = "plugin compress -l";
+          desc = "Archive selected files (compression level)";
+        }
+
+        {
+          on = "y";
+          run = [
+            "yank"
+            "plugin clipboard -- --action=copy"
+          ];
+          desc = "Yank selected files (copy)";
+        }
+        {
+          on = "x";
+          run = [
+            "yank --cut"
+            "plugin clipboard -- --action=copy"
+          ];
+          desc = "Yank selected files (cut)";
+        }
+        {
+          on = "<C-p>";
+          run = [ "plugin clipboard -- --action=paste" ];
+          desc = "Paste yanked system clipboard files";
+        }
+
+        {
+          on = "l";
+          run = "plugin smart-enter";
+          desc = "Enter the child directory, or open the file";
+        }
+      ];
+    };
   };
+
   programs.vicinae = {
     enable = true;
     settings = {
