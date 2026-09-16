@@ -26,6 +26,10 @@ in
   xdg.configFile."hypr/host-specific.conf".source =
     create_symlink "${dotfiles}/hypr/${hyprHostConfig}";
   xdg.configFile."wayle/config.toml".source = create_symlink "${dotfiles}/wayle/config.toml";
+  xdg.configFile."xdg-desktop-portal-termfilechooser/config".source =
+    create_symlink "${dotfiles}/xdg-desktop-portal-termfilechooser/config";
+  xdg.configFile."xdg-desktop-portal-termfilechooser/yazi-wrapper.sh".source =
+    create_symlink "${dotfiles}/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh";
   xdg.configFile."zsh/.zshrc".source = create_symlink "${dotfiles}/zsh/.zshrc";
   xdg.configFile."sioyek".source = create_symlink "${dotfiles}/sioyek";
   # xdg.configFile."nvim/init.lua".source = create_symlink "${dotfiles}/neovim/init.lua";

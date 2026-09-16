@@ -80,11 +80,16 @@
     extraPortals = [
       pkgs.xdg-desktop-portal-gtk
       pkgs.xdg-desktop-portal-wlr
+      pkgs.xdg-desktop-portal-termfilechooser # yazi-based file picker (multi-monitor safe)
     ];
-    config.common.default = [
-      "gtk"
-      "wlr"
-    ];
+    config.common = {
+      default = [
+        "gtk"
+        "wlr"
+      ];
+      # Route only the file-chooser to termfilechooser (yazi); gtk/wlr keep the rest.
+      "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+    };
   };
 
   programs.zsh = {
@@ -119,6 +124,7 @@
       "input"
       "dialout"
       "tty"
+      "librepods"
     ]; # Enable 'sudo' for the user.
   };
 
@@ -151,6 +157,12 @@
     aerc # mail
     fastfetch
     onlyoffice-desktopeditors
+    gst_all_1.gstreamer # all gst_all stuff is for videos in onlyoffice
+    gst_all_1.gst-plugins-base
+    gst_all_1.gst-plugins-good
+    gst_all_1.gst-plugins-bad
+    gst_all_1.gst-plugins-ugly
+    gst_all_1.gst-libav
     mattermost-desktop
     gimp2 # for image editing
     spotify
@@ -200,6 +212,9 @@
     nur.repos.lonerOrz.aerion
   ];
 
+  environment.sessionVariables.GST_PLUGIN_PATH_1_0 = "/run/current-system/sw/lib/gstreamer-1.0";
+  environment.pathsToLink = [ "/lib/gstreamer-1.0" ];
+
   #1password:
   programs._1password.enable = true;
   programs._1password-gui = {
@@ -222,6 +237,8 @@
   ];
 
   services.udisks2.enable = true; # auto mounting external drives
+
+  programs.librepods.enable = true;
 
   programs.gnupg.agent = {
     enable = true;

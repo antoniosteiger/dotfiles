@@ -45,6 +45,10 @@
     brightnessctl
     steam
     ollama
-    antigravity
+    (prismlauncher.override {
+      jdks = with pkgs; [
+        jdk25
+      ];
+    })
   ];
 }

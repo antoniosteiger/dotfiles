@@ -1,0 +1,10 @@
+[filechooser]
+# Uses the bundled yazi-wrapper.sh (found via the config-dir PATH search).
+cmd=yazi-wrapper.sh
+# Don't write the instructional help text into save targets.
+create_help_file=0
+default_dir=$HOME
+# Launch yazi in ghostty as a floating window (see hyprland.conf windowrule).
+env=TERMCMD=ghostty --class=termfilechooser -e
+open_mode=suggested
+save_mode=last
