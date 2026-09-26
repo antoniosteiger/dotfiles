@@ -17,45 +17,16 @@ in
   home.homeDirectory = "/home/toni";
   home.stateVersion = "25.11";
 
-  # home.packages = with pkgs; [
-  # ];
-
-  xdg.configFile."hypr/hypridle.conf".source = create_symlink "${dotfiles}/hypr/hypridle.conf";
   xdg.configFile."hypr/hyprland.conf".source = create_symlink "${dotfiles}/hypr/hyprland.conf";
-  xdg.configFile."hypr/hyprlock.conf".source = create_symlink "${dotfiles}/hypr/hyprlock.conf";
   xdg.configFile."hypr/host-specific.conf".source =
     create_symlink "${dotfiles}/hypr/${hyprHostConfig}";
-  xdg.configFile."wayle/config.toml".source = create_symlink "${dotfiles}/wayle/config.toml";
+  xdg.configFile."noctalia/config.toml".source = create_symlink "${dotfiles}/noctalia/config.toml";
   xdg.configFile."xdg-desktop-portal-termfilechooser/config".source =
     create_symlink "${dotfiles}/xdg-desktop-portal-termfilechooser/config";
   xdg.configFile."xdg-desktop-portal-termfilechooser/yazi-wrapper.sh".source =
     create_symlink "${dotfiles}/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh";
   xdg.configFile."zsh/.zshrc".source = create_symlink "${dotfiles}/zsh/.zshrc";
   xdg.configFile."sioyek".source = create_symlink "${dotfiles}/sioyek";
-  # xdg.configFile."nvim/init.lua".source = create_symlink "${dotfiles}/neovim/init.lua";
-
-  # pi coding agent — managed config. Uses home.file (not xdg.configFile) because pi
-  # reads from ~/.pi/agent/ and ~/.agents/, not ~/.config/. auth.json and runtime
-  # caches (models-store.json, npm/, sessions/, ~/.agents/.skill-lock.json) stay in
-  # place, unmanaged.
-  home.file.".pi/agent/settings.json".source = create_symlink "${dotfiles}/pi/settings.json";
-  home.file.".pi/agent/extensions".source = create_symlink "${dotfiles}/pi/extensions";
-  home.file.".agents/skills".source = create_symlink "${dotfiles}/pi/skills";
-
-  stylix.fonts = {
-    monospace = {
-      package = pkgs.nerd-fonts.jetbrains-mono;
-      name = "JetBrainsMono Nerd Font Mono";
-    };
-    sansSerif = {
-      package = pkgs.dejavu_fonts;
-      name = "DejaVu Sans";
-    };
-    serif = {
-      package = pkgs.dejavu_fonts;
-      name = "DejaVu Serif";
-    };
-  };
 
   programs.firefox = {
     # only browser where screen sharing works well and can be configured declaratively
@@ -125,6 +96,7 @@ in
 
   programs.neovim = {
     enable = true;
+    defaultEditor = true;
     viAlias = true;
     vimAlias = true;
     vimdiffAlias = true;
@@ -207,10 +179,6 @@ in
     withRuby = false;
   };
 
-  stylix.targets.neovim.enable = false;
-  stylix.targets.starship.enable = false;
-  stylix.targets.firefox.profileNames = [ "Default" ];
-
   programs.btop.enable = true;
   programs.yazi = {
     enable = true;
@@ -284,15 +252,6 @@ in
           desc = "Enter the child directory, or open the file";
         }
       ];
-    };
-  };
-
-  programs.vicinae = {
-    enable = true;
-    settings = {
-      theme = {
-        name = "gruvbox-dark";
-      };
     };
   };
 

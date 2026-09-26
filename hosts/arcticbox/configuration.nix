@@ -16,7 +16,7 @@
 
   environment.systemPackages = with pkgs; [
     blender
-    pi-coding-agent
+    ollama
   ];
 
   programs.steam = {

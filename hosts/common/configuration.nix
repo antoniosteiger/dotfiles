@@ -9,32 +9,29 @@
 {
   system.stateVersion = "25.11"; # Never change
 
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.grub = {
-    enable = true;
-    device = "nodev";
-    efiSupport = true;
-  };
-
-  boot.plymouth = {
-    enable = false; # takes too much boot time
-  };
-
   boot = {
+    loader.efi.canTouchEfiVariables = true;
+    loader.grub = {
+      enable = true;
+      device = "nodev";
+      efiSupport = true;
+      # No NixOS splash: GRUB draws it unscaled in the top-left corner.
+      splashImage = null;
+    };
+    # Hide the bootloader menu; any keypress still brings it up.
+    loader.timeout = 0;
+
+    plymouth.enable = false; # takes too much boot time
+
     # Enable "Silent boot"
     consoleLogLevel = 3;
     initrd.verbose = false;
     kernelParams = [
       "quiet"
-      "splash"
       "boot.shell_on_fail"
       "udev.log_priority=3"
       "rd.systemd.show_status=auto"
     ];
-    # Hide the OS choice for bootloaders.
-    # It's still possible to open the bootloader list by pressing any key
-    # It will just not appear on screen unless a key is pressed
-    loader.timeout = 0;
   };
 
   systemd.services.NetworkManager-wait-online.enable = false;
@@ -65,29 +62,38 @@
 
   services.xserver.xkb.layout = "de";
 
-  services.displayManager.gdm = {
+  services.displayManager.noctalia-greeter = {
     enable = true;
+    # Same cursor as the Hyprland session, so the pointer does not change at handover.
+    cursorTheme.package = pkgs.capitaine-cursors-themed;
+    settings = {
+      cursor = {
+        theme = "Capitaine Cursors (Gruvbox)";
+        size = 24;
+      };
+      keyboard.layout = "de";
+    };
   };
+
   services.displayManager.defaultSession = "hyprland-uwsm";
 
   services.gvfs.enable = true;
 
-  security.pam.services.hyprlock = { };
-
   xdg.portal = {
     enable = true;
-    wlr.enable = true; # Needed for proper screen sharing, screenshots, file pickers
+    # xdg-desktop-portal-hyprland is added automatically by programs.hyprland.enable.
+    # Do NOT add xdg-desktop-portal-wlr as well: both implement ScreenCast, and wlr
+    # has no window/output picker under Hyprland.
     extraPortals = [
       pkgs.xdg-desktop-portal-gtk
-      pkgs.xdg-desktop-portal-wlr
       pkgs.xdg-desktop-portal-termfilechooser # yazi-based file picker (multi-monitor safe)
     ];
     config.common = {
       default = [
+        "hyprland"
         "gtk"
-        "wlr"
       ];
-      # Route only the file-chooser to termfilechooser (yazi); gtk/wlr keep the rest.
+      # Route only the file-chooser to termfilechooser (yazi); hyprland/gtk keep the rest.
       "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
     };
   };
@@ -110,10 +116,16 @@
 
   services.printing.enable = true;
 
+  # Off by default here: it is a NixOS default-on service that pulls in
+  # espeak -> mbrola -> mbrola-voices (~645 MiB) for screen-reader TTS we never use.
+  services.speechd.enable = false;
+
   services.pipewire = {
     enable = true;
     pulse.enable = true;
+    wireplumber.enable = true; # noctalia
   };
+  security.rtkit.enable = true; # for real-time audio
 
   users.defaultUserShell = pkgs.zsh;
   users.users.toni = {
@@ -124,7 +136,6 @@
       "input"
       "dialout"
       "tty"
-      "librepods"
     ]; # Enable 'sudo' for the user.
   };
 
@@ -137,10 +148,9 @@
     git
     git-lfs
     pulseaudio
-    wayle # bar
-    awww # wallpaper engine for wayle
-    hyprlock # locking
-    hypridle # screen locking on idle
+    noctalia # desktop shell: launcher, bar, notifs, ...
+    noctalia-greeter
+    accountsservice # user avatar in lockscreen
     hyprpicker # color pipette
     capitaine-cursors-themed # replace hyprland cursor with gruvbox themed cursor.
     imagemagick
@@ -154,7 +164,6 @@
     mpv # media viewer/player: images, video, audio
     curl
     calcurse # calendar
-    aerc # mail
     fastfetch
     onlyoffice-desktopeditors
     gst_all_1.gstreamer # all gst_all stuff is for videos in onlyoffice
@@ -164,15 +173,12 @@
     gst_all_1.gst-plugins-ugly
     gst_all_1.gst-libav
     mattermost-desktop
-    gimp2 # for image editing
+    gimp3 # for image editing
     spotify
     inkscape # for svg editing
     zotero
-    vscode
     gaphor # for quick SysML diagrams
     nix-search-cli # for quick nix pckgs search in cli
-    grimblast # Needed because grim puts gray border around screenshots
-    slurp
     pdfpc # presenter view with speaker notes and timer for PDFs
     polylux2pdfpc # Extract pdfpc data from polylux based typst projects
     usbutils # lsusb & co.
@@ -187,9 +193,6 @@
     stylua # lua formatter
     ruff # python formatter and linter
     pyrefly # python language server
-    rust-analyzer # rust language server
-    rustfmt # Rust formatter
-    nodejs_24 # JS runtime old for compatibility
     bun # JS runtime
     biome # css, ts/js, html, json linter
     typescript
@@ -197,13 +200,9 @@
     lua-language-server
     marksman # markdown lsp
     vscode-langservers-extracted
-    buf
-    protoc-gen-es
     cameractrls-gtk4
     google-chrome # for compatibility and lighthouse
-    playerctl # loaded by many media-control apps
     xhost # let containers open windows
-    opencode
     claude-code
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
@@ -226,10 +225,7 @@
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gcr-ssh-agent.enable = false;
 
-  programs.xwayland.enable = true;
-
-  programs.vim.enable = true;
-  programs.vim.defaultEditor = true;
+  programs.vim.enable = true; # a system editor for root; toni gets neovim via home-manager
 
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
@@ -238,21 +234,12 @@
 
   services.udisks2.enable = true; # auto mounting external drives
 
-  programs.librepods.enable = true;
-
   programs.gnupg.agent = {
     enable = true;
   };
 
   services.openssh.enable = true;
   programs.ssh.startAgent = true;
-
-  stylix = {
-    enable = true;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-medium.yaml";
-    image = ../../backgrounds/artemis2_lunar_flyby_eclipse_integrity.jpg;
-    autoEnable = true;
-  };
 
   xdg.mime.defaultApplications = {
     "application/pdf" = "sioyek.desktop";

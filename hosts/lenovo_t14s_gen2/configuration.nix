@@ -14,13 +14,6 @@
   # Laptop-specific: Enable power management
   powerManagement.enable = true;
 
-  # Laptop-specific: Fingerprint authentication for GDM
-  security.pam.services.gdm = {
-    text = ''
-      auth sufficient pam_fprintd.so
-    '';
-  };
-
   # Laptop-specific: ThinkPad button remapping
   services.udev.extraHwdb = ''
     evdev:name:ThinkPad Extra Buttons:dmi:bvn*:bvr*:bd*:svnLENOVO*:pn*
@@ -33,6 +26,8 @@
     ${pkgs.systemd}/bin/systemctl stop fprintd.service 2>/dev/null || true
   '';
 
+  services.power-profiles-daemon.enable = true;
+
   # Laptop-specific: Battery and power management
   services.upower.enable = true; # used to get battery info
 
@@ -44,7 +39,6 @@
   environment.systemPackages = with pkgs; [
     brightnessctl
     steam
-    ollama
     (prismlauncher.override {
       jdks = with pkgs; [
         jdk25

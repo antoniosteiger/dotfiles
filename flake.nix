@@ -8,25 +8,23 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    llm-agents.url = "github:numtide/llm-agents.nix";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    stylix = {
-      url = "github:nix-community/stylix/release-26.05";
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
   outputs =
     {
-      # self,
       nixpkgs,
       nixos-hardware,
       home-manager,
-      stylix,
+      noctalia-greeter,
       ...
     }@inputs:
     {
@@ -48,7 +46,7 @@
               };
             };
           }
-          stylix.nixosModules.stylix
+          noctalia-greeter.nixosModules.default
         ];
       };
 
@@ -69,9 +67,8 @@
               };
             };
           }
-          stylix.nixosModules.stylix
+          noctalia-greeter.nixosModules.default
         ];
       };
     };
-
 }
