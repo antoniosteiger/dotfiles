@@ -163,21 +163,19 @@
     pdfcpu # pdf manipulation, e.g. extract a page
     mpv # media viewer/player: images, video, audio
     curl
-    calcurse # calendar
     fastfetch
     onlyoffice-desktopeditors
-    gst_all_1.gstreamer # all gst_all stuff is for videos in onlyoffice
-    gst_all_1.gst-plugins-base
-    gst_all_1.gst-plugins-good
-    gst_all_1.gst-plugins-bad
-    gst_all_1.gst-plugins-ugly
-    gst_all_1.gst-libav
+    # gst_all_1.gstreamer # all gst_all stuff is for videos in onlyoffice
+    # gst_all_1.gst-plugins-base
+    # gst_all_1.gst-plugins-good
+    # gst_all_1.gst-plugins-bad
+    # gst_all_1.gst-plugins-ugly
+    # gst_all_1.gst-libav
     mattermost-desktop
     gimp3 # for image editing
     spotify
     inkscape # for svg editing
     zotero
-    gaphor # for quick SysML diagrams
     nix-search-cli # for quick nix pckgs search in cli
     pdfpc # presenter view with speaker notes and timer for PDFs
     polylux2pdfpc # Extract pdfpc data from polylux based typst projects
@@ -208,7 +206,7 @@
     localsend # local network file sharing
     anytype
     gcr # for anytype
-    nur.repos.lonerOrz.aerion
+    nur.repos.lonerOrz.aerion # mail
   ];
 
   environment.sessionVariables.GST_PLUGIN_PATH_1_0 = "/run/current-system/sw/lib/gstreamer-1.0";

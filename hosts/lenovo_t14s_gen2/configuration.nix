@@ -38,7 +38,6 @@
   # Laptop-specific: Brightness control
   environment.systemPackages = with pkgs; [
     brightnessctl
-    steam
     (prismlauncher.override {
       jdks = with pkgs; [
         jdk25
