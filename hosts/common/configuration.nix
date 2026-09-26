@@ -37,10 +37,21 @@
   systemd.services.NetworkManager-wait-online.enable = false;
   services.fwupd.enable = true;
 
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 10d";
+  # Generation retention is count-based. nix.gc can only express age
+  # ("--delete-older-than"), which bounds nothing if you rebuild several times
+  # a day; nh keeps the N newest across system, user and home-manager profiles.
+  nix.gc.automatic = false; # must not run alongside nh-clean
+  nix.optimise.automatic = true; # nightly hardlink dedup of identical files
+
+  programs.nh = {
+    enable = true;
+    flake = "/home/toni/dotfiles";
+    clean = {
+      enable = true;
+      dates = "weekly";
+      # Union, not intersection: at least 4 generations AND at least 7 days.
+      extraArgs = "--keep 4 --keep-since 7d";
+    };
   };
 
   networking.firewall = {
@@ -176,7 +187,6 @@
     spotify
     inkscape # for svg editing
     zotero
-    nix-search-cli # for quick nix pckgs search in cli
     pdfpc # presenter view with speaker notes and timer for PDFs
     polylux2pdfpc # Extract pdfpc data from polylux based typst projects
     usbutils # lsusb & co.
