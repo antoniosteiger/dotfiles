@@ -191,7 +191,111 @@ in
     };
 
     settings = {
-      # general yazi.toml config goes here (empty for now, unless you have other settings)
+      # Extra openers, offered in the `open --interactive` menu (<S-Enter>).
+      # The default openers (edit/open/play/reveal/extract) stay as they are.
+      opener = {
+        gimp = [
+          {
+            run = "gimp %s";
+            desc = "GIMP";
+            for = "unix";
+            orphan = true;
+          }
+        ];
+        inkscape = [
+          {
+            run = "inkscape %s";
+            desc = "Inkscape";
+            for = "unix";
+            orphan = true;
+          }
+        ];
+        mpv = [
+          {
+            run = "mpv %s";
+            desc = "mpv";
+            for = "unix";
+            orphan = true;
+          }
+        ];
+        browser = [
+          {
+            run = "google-chrome-stable %s";
+            desc = "Chrome";
+            for = "unix";
+            orphan = true;
+          }
+          {
+            run = "firefox %s";
+            desc = "Firefox";
+            for = "unix";
+            orphan = true;
+          }
+        ];
+        sioyek = [
+          {
+            run = "sioyek %s1";
+            desc = "Sioyek";
+            for = "unix";
+            orphan = true;
+          }
+        ];
+      };
+
+      # First entry of each rule is what plain <Enter> uses;
+      # <S-Enter> shows the whole list to pick from.
+      open = {
+        prepend_rules = [
+          {
+            url = "*.svg";
+            use = [
+              "inkscape"
+              "open"
+              "gimp"
+              "browser"
+              "edit"
+              "reveal"
+            ];
+          }
+          {
+            mime = "image/*";
+            use = [
+              "mpv"
+              "open"
+              "gimp"
+              "inkscape"
+              "browser"
+              "reveal"
+            ];
+          }
+          {
+            mime = "{audio,video}/*";
+            use = [
+              "mpv"
+              "play"
+              "browser"
+              "reveal"
+            ];
+          }
+          {
+            mime = "application/pdf";
+            use = [
+              "sioyek"
+              "open"
+              "browser"
+              "reveal"
+            ];
+          }
+          {
+            mime = "text/html";
+            use = [
+              "browser"
+              "edit"
+              "reveal"
+            ];
+          }
+        ];
+      };
     };
 
     keymap = {
