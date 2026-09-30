@@ -153,6 +153,14 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [
     inputs.nur.overlays.default
+    # Exposes the unstable channel as pkgs.unstable.* for the few packages that
+    # should track upstream instead of the stable release.
+    (final: prev: {
+      unstable = import inputs.nixpkgs-unstable {
+        inherit (prev.stdenv.hostPlatform) system;
+        inherit (prev) config;
+      };
+    })
   ];
   environment.systemPackages = with pkgs; [
     wget
@@ -211,7 +219,7 @@
     cameractrls-gtk4
     google-chrome # for compatibility and lighthouse
     xhost # let containers open windows
-    claude-code
+    unstable.claude-code
     ltex-ls-plus # spell checking in nvim
     localsend # local network file sharing
     anytype

@@ -3,6 +3,9 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-26.05";
+    # Only used for individual packages we want ahead of the stable channel
+    # (see the `unstable` overlay in hosts/common/configuration.nix).
+    nixpkgs-unstable.url = "nixpkgs/nixos-unstable";
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
