@@ -227,6 +227,8 @@
     anytype
     gcr # for anytype
     inputs.aerion.packages.${pkgs.stdenv.hostPlatform.system}.default # mail (personal fork)
+    hunspellDicts.en_US # system spellcheck dictionaries (Aerion, other Hunspell/Enchant apps)
+    hunspellDicts.de_DE
     openvpn
   ];
 

@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1792185707,
-        "narHash": "sha256-+kbSCJR6ddjG3PgtFx8Nc5S740WVju43YU/LNCvuzzw=",
+        "lastModified": 1792192622,
+        "narHash": "sha256-3rl0pOV+iUoncLmla/pawL6iM145vGgVAUX38kwf1QI=",
         "owner": "antoniosteiger",
         "repo": "aerion",
-        "rev": "31ae563f25a682fd511088f5e8cc694db4f1f56c",
+        "rev": "8a217702f2fe4b201c2608856d047df9bcc1e54a",
         "type": "github"
       },
       "original": {

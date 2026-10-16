@@ -205,6 +205,32 @@ in
         '';
       };
 
+      # Mail files with Aerion; folders are zipped first (one <name>.zip each).
+      yaziMail = pkgs.writeShellApplication {
+        name = "yazi-mail";
+        runtimeInputs = [ pkgs.zip ];
+        text = ''
+          # Aerion reads attachments only once the composer opens, so archives
+          # stay around; $XDG_RUNTIME_DIR is tmpfs and old runs are swept here.
+          base="''${XDG_RUNTIME_DIR:-/tmp}/yazi-mail"
+          mkdir -p "$base"
+          find "$base" -mindepth 1 -maxdepth 1 -mmin +60 -exec rm -rf {} +
+          dir=$(mktemp -d "$base/XXXXXX")
+          files=()
+          for f in "$@"; do
+            if [ -d "$f" ]; then
+              path=$(realpath "$f")
+              name=$(basename "$path")
+              (cd "$(dirname "$path")" && zip -qr "$dir/$name.zip" "$name")
+              files+=("$dir/$name.zip")
+            else
+              files+=("$f")
+            fi
+          done
+          exec aerion --attach -- "''${files[@]}"
+        '';
+      };
+
       # Print through CUPS; asks for a printer when there is more than one.
       yaziPrint = pkgs.writeShellApplication {
         name = "yazi-print";
@@ -317,6 +343,15 @@ in
               orphan = true;
             }
           ];
+          mail = [
+            {
+              # New message with the files attached (Aerion fork's --attach flag)
+              run = "${yaziMail}/bin/yazi-mail %s";
+              desc = "Mail (Aerion)";
+              for = "unix";
+              orphan = true;
+            }
+          ];
         };
 
         # First entry of each rule is what plain <Enter> uses;
@@ -330,6 +365,7 @@ in
               use
               ++ [
                 "copy"
+                "mail"
                 "share"
               ];
             withPrint =
@@ -338,6 +374,7 @@ in
               ++ [
                 "copy"
                 "print"
+                "mail"
                 "share"
               ];
           in
