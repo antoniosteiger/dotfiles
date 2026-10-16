@@ -125,6 +125,8 @@
     ZDOTDIR = "$HOME/.config/zsh";
   };
 
+  environment.variables.EDITOR = "nvim";
+
   services.printing.enable = true;
 
   # Off by default here: it is a NixOS default-on service that pulls in
@@ -224,11 +226,13 @@
     localsend # local network file sharing
     anytype
     gcr # for anytype
-    nur.repos.lonerOrz.aerion # mail
+    inputs.aerion.packages.${pkgs.stdenv.hostPlatform.system}.default # mail (personal fork)
+    openvpn
   ];
 
-  environment.sessionVariables.GST_PLUGIN_PATH_1_0 = "/run/current-system/sw/lib/gstreamer-1.0";
-  environment.pathsToLink = [ "/lib/gstreamer-1.0" ];
+  # for gstreamer for onlyoffice
+  # environment.sessionVariables.GST_PLUGIN_PATH_1_0 = "/run/current-system/sw/lib/gstreamer-1.0";
+  # environment.pathsToLink = [ "/lib/gstreamer-1.0" ];
 
   #1password:
   programs._1password.enable = true;
@@ -240,6 +244,9 @@
   # For anytype:
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gcr-ssh-agent.enable = false;
+
+  # file exchange between phone and PC:
+  programs.localsend.enable = true;
 
   programs.vim.enable = true; # a system editor for root; toni gets neovim via home-manager
 

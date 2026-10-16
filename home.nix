@@ -180,184 +180,335 @@ in
   };
 
   programs.btop.enable = true;
-  programs.yazi = {
-    enable = true;
-    shellWrapperName = "y";
+  programs.yazi =
+    let
+      # Put files on the clipboard as file:// URIs, so they paste as files into Slack, browsers, etc.
+      yaziCopy = pkgs.writeShellApplication {
+        name = "yazi-copy";
+        runtimeInputs = [ pkgs.wl-clipboard ];
+        text = ''
+          encode() {
+            # LC_ALL=C: walk bytes, so non-ASCII names get UTF-8 percent-encoding
+            local LC_ALL=C s="$1" out="" c i
+            for ((i = 0; i < ''${#s}; i++)); do
+              c="''${s:i:1}"
+              case "$c" in
+                [A-Za-z0-9/._~-]) out+="$c" ;;
+                *) out+=$(printf '%%%02X' "'$c") ;;
+              esac
+            done
+            printf '%s' "$out"
+          }
+          for f in "$@"; do
+            printf 'file://%s\r\n' "$(encode "$(realpath "$f")")"
+          done | wl-copy -t text/uri-list
+        '';
+      };
 
-    plugins = with pkgs.yaziPlugins; {
-      smart-enter.package = smart-enter;
-      compress.package = compress;
-      clipboard.package = clipboard;
-    };
+      # Print through CUPS; asks for a printer when there is more than one.
+      yaziPrint = pkgs.writeShellApplication {
+        name = "yazi-print";
+        runtimeInputs = [ pkgs.cups ];
+        text = ''
+          mapfile -t printers < <(lpstat -e 2>/dev/null)
+          if [ "''${#printers[@]}" -eq 0 ]; then
+            echo "No printers configured. Add one at http://localhost:631"
+            read -rp "Press enter to close" _
+            exit 1
+          fi
+          if [ "''${#printers[@]}" -eq 1 ]; then
+            dest="''${printers[0]}"
+          else
+            default=$(lpstat -d 2>/dev/null | sed -n 's/^system default destination: //p')
+            echo "Printer (default: ''${default:-none}):"
+            select dest in "''${printers[@]}"; do [ -n "$dest" ] && break; done
+          fi
+          printf 'Print %s file(s) on %s? [Y/n] ' "$#" "$dest"
+          read -r answer
+          case "$answer" in [nN]*) exit 0 ;; esac
+          lp -d "$dest" "$@"
+          read -rp "Press enter to close" _
+        '';
+      };
+    in
+    {
+      enable = true;
+      shellWrapperName = "y";
 
-    settings = {
-      # Extra openers, offered in the `open --interactive` menu (<S-Enter>).
-      # The default openers (edit/open/play/reveal/extract) stay as they are.
-      opener = {
-        gimp = [
+      plugins = with pkgs.yaziPlugins; {
+        smart-enter.package = smart-enter;
+        compress.package = compress;
+        clipboard.package = clipboard;
+      };
+
+      settings = {
+        # Extra openers, offered in the `open --interactive` menu (<S-Enter>).
+        # The default openers (edit/open/play/reveal/extract) stay as they are.
+        opener = {
+          gimp = [
+            {
+              run = "gimp %s";
+              desc = "GIMP";
+              for = "unix";
+              orphan = true;
+            }
+          ];
+          inkscape = [
+            {
+              run = "inkscape %s";
+              desc = "Inkscape";
+              for = "unix";
+              orphan = true;
+            }
+          ];
+          mpv = [
+            {
+              run = "mpv %s";
+              desc = "mpv";
+              for = "unix";
+              orphan = true;
+            }
+          ];
+          browser = [
+            {
+              run = "google-chrome-stable %s";
+              desc = "Chrome";
+              for = "unix";
+              orphan = true;
+            }
+            {
+              run = "firefox %s";
+              desc = "Firefox";
+              for = "unix";
+              orphan = true;
+            }
+          ];
+          sioyek = [
+            {
+              run = "sioyek %s1";
+              desc = "Sioyek";
+              for = "unix";
+              orphan = true;
+            }
+          ];
+
+          # File actions, listed at the end of the <S-Enter> menu.
+          copy = [
+            {
+              run = "${yaziCopy}/bin/yazi-copy %s";
+              desc = "Copy to clipboard";
+              for = "unix";
+            }
+          ];
+          print = [
+            {
+              run = "${yaziPrint}/bin/yazi-print %s";
+              desc = "Print";
+              for = "unix";
+              block = true;
+            }
+          ];
+          share = [
+            {
+              # Hands the files to the running (tray) instance and opens its Send tab.
+              run = "localsend_app %s";
+              desc = "Share (LocalSend)";
+              for = "unix";
+              orphan = true;
+            }
+          ];
+        };
+
+        # First entry of each rule is what plain <Enter> uses;
+        # <S-Enter> shows the whole list to pick from.
+        # Only the first matching rule applies, so this replaces yazi's preset rules
+        # (copied below the custom ones) to get the file actions onto every file type.
+        open.rules =
+          let
+            withActions =
+              use:
+              use
+              ++ [
+                "copy"
+                "share"
+              ];
+            withPrint =
+              use:
+              use
+              ++ [
+                "copy"
+                "print"
+                "share"
+              ];
+          in
+          [
+            {
+              url = "*.svg";
+              use = withActions [
+                "inkscape"
+                "open"
+                "gimp"
+                "browser"
+                "edit"
+                "reveal"
+              ];
+            }
+            {
+              mime = "image/*";
+              use = withPrint [
+                "mpv"
+                "open"
+                "gimp"
+                "inkscape"
+                "browser"
+                "reveal"
+              ];
+            }
+            {
+              mime = "{audio,video}/*";
+              use = withActions [
+                "mpv"
+                "play"
+                "browser"
+                "reveal"
+              ];
+            }
+            {
+              mime = "application/pdf";
+              use = withPrint [
+                "sioyek"
+                "open"
+                "browser"
+                "reveal"
+              ];
+            }
+            {
+              mime = "text/html";
+              use = withActions [
+                "browser"
+                "edit"
+                "reveal"
+              ];
+            }
+
+            # yazi preset rules
+            {
+              mime = "folder/*";
+              use = withActions [
+                "edit"
+                "open"
+                "reveal"
+              ];
+            }
+            {
+              mime = "text/*";
+              use = withPrint [
+                "edit"
+                "reveal"
+              ];
+            }
+            {
+              mime = "application/{json,ndjson,javascript,wine-extension-ini}";
+              use = withActions [
+                "edit"
+                "reveal"
+              ];
+            }
+            {
+              mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}";
+              use = withActions [
+                "extract"
+                "reveal"
+              ];
+            }
+            {
+              mime = "inode/empty";
+              use = [
+                "edit"
+                "reveal"
+              ];
+            }
+            {
+              mime = "vfs/{absent,stale}";
+              use = "download";
+            }
+            {
+              mime = "trash/**";
+              use = [
+                "open"
+                "trash"
+              ];
+            }
+            {
+              url = "*";
+              use = withActions [
+                "open"
+                "reveal"
+              ];
+            }
+          ];
+      };
+
+      keymap = {
+        mgr.prepend_keymap = [
           {
-            run = "gimp %s";
-            desc = "GIMP";
-            for = "unix";
-            orphan = true;
+            on = [
+              "c"
+              "a"
+              "a"
+            ];
+            run = "plugin compress";
+            desc = "Archive selected files";
           }
-        ];
-        inkscape = [
           {
-            run = "inkscape %s";
-            desc = "Inkscape";
-            for = "unix";
-            orphan = true;
-          }
-        ];
-        mpv = [
-          {
-            run = "mpv %s";
-            desc = "mpv";
-            for = "unix";
-            orphan = true;
-          }
-        ];
-        browser = [
-          {
-            run = "google-chrome-stable %s";
-            desc = "Chrome";
-            for = "unix";
-            orphan = true;
+            on = [
+              "c"
+              "a"
+              "p"
+            ];
+            run = "plugin compress -p";
+            desc = "Archive selected files (password)";
           }
           {
-            run = "firefox %s";
-            desc = "Firefox";
-            for = "unix";
-            orphan = true;
+            on = [
+              "c"
+              "a"
+              "l"
+            ];
+            run = "plugin compress -l";
+            desc = "Archive selected files (compression level)";
           }
-        ];
-        sioyek = [
+
           {
-            run = "sioyek %s1";
-            desc = "Sioyek";
-            for = "unix";
-            orphan = true;
+            on = "y";
+            run = [
+              "yank"
+              "plugin clipboard -- --action=copy"
+            ];
+            desc = "Yank selected files (copy)";
+          }
+          {
+            on = "x";
+            run = [
+              "yank --cut"
+              "plugin clipboard -- --action=copy"
+            ];
+            desc = "Yank selected files (cut)";
+          }
+          {
+            on = "<C-p>";
+            run = [ "plugin clipboard -- --action=paste" ];
+            desc = "Paste yanked system clipboard files";
+          }
+
+          {
+            on = "l";
+            run = "plugin smart-enter";
+            desc = "Enter the child directory, or open the file";
           }
         ];
       };
-
-      # First entry of each rule is what plain <Enter> uses;
-      # <S-Enter> shows the whole list to pick from.
-      open = {
-        prepend_rules = [
-          {
-            url = "*.svg";
-            use = [
-              "inkscape"
-              "open"
-              "gimp"
-              "browser"
-              "edit"
-              "reveal"
-            ];
-          }
-          {
-            mime = "image/*";
-            use = [
-              "mpv"
-              "open"
-              "gimp"
-              "inkscape"
-              "browser"
-              "reveal"
-            ];
-          }
-          {
-            mime = "{audio,video}/*";
-            use = [
-              "mpv"
-              "play"
-              "browser"
-              "reveal"
-            ];
-          }
-          {
-            mime = "application/pdf";
-            use = [
-              "sioyek"
-              "open"
-              "browser"
-              "reveal"
-            ];
-          }
-          {
-            mime = "text/html";
-            use = [
-              "browser"
-              "edit"
-              "reveal"
-            ];
-          }
-        ];
-      };
     };
-
-    keymap = {
-      mgr.prepend_keymap = [
-        {
-          on = [
-            "c"
-            "a"
-            "a"
-          ];
-          run = "plugin compress";
-          desc = "Archive selected files";
-        }
-        {
-          on = [
-            "c"
-            "a"
-            "p"
-          ];
-          run = "plugin compress -p";
-          desc = "Archive selected files (password)";
-        }
-        {
-          on = [
-            "c"
-            "a"
-            "l"
-          ];
-          run = "plugin compress -l";
-          desc = "Archive selected files (compression level)";
-        }
-
-        {
-          on = "y";
-          run = [
-            "yank"
-            "plugin clipboard -- --action=copy"
-          ];
-          desc = "Yank selected files (copy)";
-        }
-        {
-          on = "x";
-          run = [
-            "yank --cut"
-            "plugin clipboard -- --action=copy"
-          ];
-          desc = "Yank selected files (cut)";
-        }
-        {
-          on = "<C-p>";
-          run = [ "plugin clipboard -- --action=paste" ];
-          desc = "Paste yanked system clipboard files";
-        }
-
-        {
-          on = "l";
-          run = "plugin smart-enter";
-          desc = "Enter the child directory, or open the file";
-        }
-      ];
-    };
-  };
 
   programs.discord.enable = true;
 

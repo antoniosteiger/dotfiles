@@ -43,5 +43,6 @@
         jdk25
       ];
     })
+    tigervnc
   ];
 }
