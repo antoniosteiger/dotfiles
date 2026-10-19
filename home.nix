@@ -89,6 +89,37 @@ in
     };
   };
 
+  # Open folders in yazi from GUI apps. yazi.desktop has Terminal=true, which xdg-open
+  # ignores on Hyprland: it runs a bare `yazi` without a tty, which dies silently.
+  # This entry launches ghostty itself, so it works via xdg-open, gio and portals.
+  xdg.desktopEntries.yazi-ghostty = {
+    name = "Yazi";
+    genericName = "File Manager";
+    exec = "ghostty -e yazi %f";
+    terminal = false;
+    icon = "yazi";
+    mimeType = [ "inode/directory" ];
+    categories = [
+      "System"
+      "FileManager"
+    ];
+  };
+
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "inode/directory" = "yazi-ghostty.desktop";
+      "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+    };
+  };
+
+  # Terminal for apps that launch Terminal=true entries through GLib/gio.
+  home.packages = [
+    pkgs.xdg-terminal-exec
+    pkgs.glib # `gio` CLI: the yazi devices plugin uses it to list/unmount drives and phones
+  ];
+  xdg.configFile."xdg-terminals.list".text = "com.mitchellh.ghostty.desktop\n";
+
   programs.starship = {
     enable = true;
     settings = builtins.fromTOML (builtins.readFile ./config/starship/starship.toml);
@@ -265,6 +296,8 @@ in
         smart-enter.package = smart-enter;
         compress.package = compress;
         clipboard.package = clipboard;
+        # Own plugin: one menu for every mounted drive/phone/camera (via gvfs).
+        devices = ./config/yazi/plugins/devices.yazi;
       };
 
       settings = {
@@ -543,15 +576,36 @@ in
             run = "plugin smart-enter";
             desc = "Enter the child directory, or open the file";
           }
+
+          {
+            on = "M";
+            run = "plugin devices";
+            desc = "Mounted devices: jump to one, or u to unmount";
+          }
         ];
       };
     };
 
   programs.discord.enable = true;
 
-  services.udiskie = {
-    # auto mounting external drives
-    enable = true;
-    tray = "auto"; # only show in tray if device is available
+  # Automount drives, phones (MTP) and cameras on plug-in. udiskie only handles
+  # drives; PCManFM's windowless daemon mounts anything gvfs sees.
+  systemd.user.services.pcmanfm-automount = {
+    Unit = {
+      Description = "PCManFM daemon: automount removable media";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.pcmanfm}/bin/pcmanfm --daemon-mode";
+      Restart = "on-failure";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
+  xdg.configFile."pcmanfm/default/pcmanfm.conf".text = ''
+    [volume]
+    mount_on_startup=1
+    mount_removable=1
+    autorun=0
+  '';
 }
