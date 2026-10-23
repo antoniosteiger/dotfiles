@@ -56,7 +56,7 @@ thickness = 25
     enabled = true
     fill = "surface_variant"
     id = "g5"
-    members = [ "tray", "caffeine" ]
+    members = [ "tray", "recorder", "caffeine" ]
     opacity = 1.0
     padding = 6.0
     radius = 4.0
@@ -198,7 +198,13 @@ position = "bottom_center"
 position_vertical = "bottom_center"
 
 [plugins]
-enabled = [ "noctalia/translator", "thaer99ob/default-apps" ]
+enabled = [ "noctalia/translator", "thaer99ob/default-apps", "noctalia/screen_recorder" ]
+
+[plugin_settings."noctalia/screen_recorder"]
+directory = "/home/toni/screenshots"
+frame_rate = 30
+frame_rate_mode = "cfr"
+video_source = "focused" # whole focused monitor, no picker
 
 [shell]
 avatar_path = "/home/toni/dotfiles/DUNEO_signet_negative.png"
@@ -258,6 +264,9 @@ transition = [ "fade" ]
 
 [weather]
 enabled = false
+
+[widget.recorder]
+type = "noctalia/screen_recorder:recorder"
 
 [widget.audio_visualizer]
 bands = 32

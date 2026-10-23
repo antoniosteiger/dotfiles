@@ -193,6 +193,7 @@
     # gst_all_1.gst-plugins-ugly
     # gst_all_1.gst-libav
     mattermost-desktop
+    zulip
     gimp3 # for image editing
     spotify
     inkscape # for svg editing
@@ -238,6 +239,7 @@
 
   #1password:
   programs._1password.enable = true;
+  programs.gpu-screen-recorder.enable = true; # recording backend for the noctalia screen_recorder plugin; sets up the capability wrapper for KMS capture
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = [ "toni" ];
@@ -255,6 +257,7 @@
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
     dejavu_fonts
+    (google-fonts.override { fonts = [ "HostGrotesk" ]; })
   ];
 
   services.udisks2.enable = true; # auto mounting external drives
