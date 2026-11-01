@@ -73,7 +73,7 @@ in
       };
 
       Preferences = {
-        "browser.startup.homepage" = "https://google.com";
+        "browser.startup.homepage" = "about:blank";
         "dom.webgpu.enabled" = true;
         "gfx.webgpu.force-enabled" = true;
         "gfx.webrender.all" = true;
@@ -262,6 +262,50 @@ in
         '';
       };
 
+      # Re-encode videos to smaller .mp4 files next to the originals (never overwrites).
+      yaziCompress = pkgs.writeShellApplication {
+        name = "yazi-compress";
+        runtimeInputs = [
+          pkgs.ffmpeg
+          pkgs.coreutils
+        ];
+        text = ''
+          echo "Compress $# video(s); originals are kept."
+          PS3="Preset: "
+          select _ in \
+            "Balanced - H.264, CRF 26, original size" \
+            "Small    - H.265, CRF 28, original size" \
+            "Share    - H.264, CRF 28, max 720p (WhatsApp, mail)"; do
+            case "$REPLY" in
+              1) vargs=(-c:v libx264 -crf 26 -preset medium) ;;
+              2) vargs=(-c:v libx265 -crf 28 -preset medium -tag:v hvc1) ;;
+              3) vargs=(-c:v libx264 -crf 28 -preset medium -vf "scale=-2:'min(720,ih)'") ;;
+              *) continue ;;
+            esac
+            break
+          done
+
+          for f in "$@"; do
+            out="''${f%.*}-compressed.mp4"
+            if [ -e "$out" ]; then
+              echo "Skipped, already exists: $out"
+              continue
+            fi
+            echo "-> $out"
+            if ffmpeg -nostdin -hide_banner -loglevel error -stats -i "$f" \
+              -map 0:v:0 -map '0:a?' "''${vargs[@]}" -pix_fmt yuv420p \
+              -c:a aac -b:a 128k -map_metadata 0 -movflags +faststart "$out"; then
+              touch -r "$f" "$out"
+              echo "$(numfmt --to=iec "$(stat -c %s "$f")") -> $(numfmt --to=iec "$(stat -c %s "$out")")"
+            else
+              echo "FAILED: $f"
+              rm -f "$out"
+            fi
+          done
+          read -rp "Press enter to close" _
+        '';
+      };
+
       # Print through CUPS; asks for a printer when there is more than one.
       yaziPrint = pkgs.writeShellApplication {
         name = "yazi-print";
@@ -359,6 +403,14 @@ in
               for = "unix";
             }
           ];
+          compress-video = [
+            {
+              run = "${yaziCompress}/bin/yazi-compress %s";
+              desc = "Compress video (ffmpeg)";
+              for = "unix";
+              block = true;
+            }
+          ];
           print = [
             {
               run = "${yaziPrint}/bin/yazi-print %s";
@@ -435,7 +487,17 @@ in
               ];
             }
             {
-              mime = "{audio,video}/*";
+              mime = "video/*";
+              use = withActions [
+                "mpv"
+                "play"
+                "browser"
+                "reveal"
+                "compress-video"
+              ];
+            }
+            {
+              mime = "audio/*";
               use = withActions [
                 "mpv"
                 "play"
