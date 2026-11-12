@@ -79,7 +79,9 @@ in
           proxy_hide_header Referrer-Policy;
           add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
           add_header X-Content-Type-Options "nosniff" always;
-          add_header Referrer-Policy "no-referrer" always;
+          # NOT "no-referrer": browsers then send `Origin: null` on same-site POSTs and
+          # Django (Paperless) rejects the login with "CSRF verification failed".
+          add_header Referrer-Policy "same-origin" always;
           add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
           add_header X-Robots-Tag "noindex, nofollow" always;
         '';

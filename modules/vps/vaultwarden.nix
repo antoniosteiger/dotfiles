@@ -52,7 +52,9 @@ in
       acmeRoot = null;
       extraConfig =
         config.vps.nginx.securityHeaders
-        + lib.optionalString (config.vps.vaultwarden.exposure == "tailscale") config.vps.nginx.tailscaleOnly;
+        + lib.optionalString (
+          config.vps.vaultwarden.exposure == "tailscale"
+        ) config.vps.nginx.tailscaleOnly;
       locations."/" = {
         proxyPass = "http://127.0.0.1:${toString port}";
         proxyWebsockets = true;
