@@ -1,10 +1,11 @@
 # tonix
 
-NixOS configuration for two machines, managed as a single flake.
+NixOS configuration for three machines, managed as a single flake.
 
 | Host | Hostname | Machine |
 | --- | --- | --- |
 | `lenovo_t14s_gen2` | `tonix-laptop` | ThinkPad T14s Gen2 (AMD) |
+| `framework_13_pro` | `tonix-framework` | Framework Laptop 13 Pro (Intel Core Ultra X7 358H) |
 | `arcticbox` | `tonix-desktop` | Desktop |
 
 ## What this setup is
@@ -30,7 +31,7 @@ Everything is declared here. The only things not in this repo are secrets
 | Session launcher | UWSM (`hyprland-uwsm`) |
 | Compositor / window manager | Hyprland (Wayland) |
 | Desktop shell — bar, notifications, launcher, OSD, lockscreen, idle, wallpaper, screenshots, colour picker panel, power menu | **Noctalia** |
-| System theming | Noctalia templates (GTK, Qt, ghostty, btop, starship, neovim, yazi, sioyek, discord, …) |
+| System theming | Noctalia templates (GTK, Qt, ghostty, btop, starship, neovim, yazi, sioyek, …) |
 | Audio | PipeWire + WirePlumber |
 | Graphics | Mesa (AMD / radeonsi) |
 | Networking | NetworkManager |
@@ -42,14 +43,16 @@ Everything is declared here. The only things not in this repo are secrets
 | Passwords | 1Password |
 | Terminal | Ghostty |
 | Shell | zsh + starship |
-| Editor | Neovim (vim kept for root) |
+| Editor | Neovim (root gets the NixOS default, nano) |
 | File manager | yazi |
-| Browser | Firefox (Chrome kept for compatibility/Lighthouse) |
+| Browser | Firefox (Chrome is on demand: `NIXPKGS_ALLOW_UNFREE=1 nix shell --impure nixpkgs#google-chrome`) |
 | PDF viewer | sioyek |
+| Image viewer | swayimg |
+| Video / audio | mpv (no YouTube support, so no yt-dlp/deno; `mpris` script so audio shows in Noctalia's media player) |
 | Colour picker | hyprpicker |
 | Screenshots | Noctalia (native screencopy — no grim/slurp) |
 | Media control | Noctalia (native MPRIS — no playerctl) |
-| Fonts | JetBrains Mono Nerd Font, DejaVu |
+| Fonts | Host Grotesk (UI), DejaVu; Ghostty embeds its own JetBrains Mono + Symbols Nerd Font |
 | Generation cleanup | `nh clean` (see below) |
 
 Noctalia replaced a pile of single-purpose tools that used to live here:
@@ -63,6 +66,7 @@ Standard way:
 
 ```sh
 sudo nixos-rebuild switch --flake ~/dotfiles#lenovo_t14s_gen2   # laptop
+sudo nixos-rebuild switch --flake ~/dotfiles#framework_13_pro   # Framework laptop
 sudo nixos-rebuild switch --flake ~/dotfiles#arcticbox          # desktop
 ```
 
@@ -101,19 +105,22 @@ nh os switch -H lenovo_t14s_gen2   # works
 Renaming the flake attributes to match the hostnames would remove the need for
 `-H` and `#host` entirely. Not done yet.
 
-### Shared config needs modules added to *both* hosts
+### Shared config needs modules added to *every* host
 
-`hosts/common/configuration.nix` is imported by both machines. If it uses an
+`hosts/common/configuration.nix` is imported by all machines. If it uses an
 option from a flake input's module (e.g. `services.displayManager.noctalia-greeter`),
-that module must be listed in **both** hosts' `modules` lists in `flake.nix`.
-Missing it on one host makes that host fail to evaluate — and you will not
+that module must be in the `modules` list of `mkHost` in `flake.nix`, which is
+where the home-manager and greeter modules already live. Hardware modules
+(nixos-hardware) go in the host's `hardware = [ … ]` entry instead.
+Missing a module on one host makes that host fail to evaluate — and you will not
 notice, because you usually only rebuild the machine you are sitting at.
 
-Check both before committing:
+Check all of them before committing:
 
 ```sh
-nix eval .#nixosConfigurations.lenovo_t14s_gen2.config.system.build.toplevel.drvPath
-nix eval .#nixosConfigurations.arcticbox.config.system.build.toplevel.drvPath
+for h in lenovo_t14s_gen2 framework_13_pro arcticbox; do
+  nix eval .#nixosConfigurations.$h.config.system.build.toplevel.drvPath
+done
 ```
 
 ### The keyring prompt: `default` must point at `login`
@@ -207,8 +214,7 @@ Measured on the laptop; see `tools/weigh.sh`.
 | --- | --- |
 | `services.speechd` is **on by default** in NixOS and pulls espeak → mbrola → mbrola-voices | 645 MiB |
 | `nixos-hardware`'s `common/gpu/amd` turns on `hardware.graphics.enable32Bit`, duplicating Mesa + LLVM | 884 MiB |
-| `ltex-ls-plus` (nvim spell-check) pulls a headless JDK | 822 MiB |
-| Two cursor theme packages (greeter vs session) | ~690 MiB |
+| `capitaine-cursors-themed` ships 8 prebuilt variants; `gruvboxCursor` in `hosts/common/configuration.nix` keeps only Gruvbox | 370 MiB (NAR) → ~46 MiB |
 | Steam's FHS env pulls the full 223 MiB `glibc-locales` regardless of `i18n.supportedLocales` | 223 MiB |
 
 Most "minimise NixOS" advice (`environment.defaultPackages = []`, the `perlless`
@@ -225,11 +231,11 @@ is accurate.
 ## Layout
 
 ```
-flake.nix                  inputs + both host definitions
-home.nix                   home-manager (shared by both hosts)
-hosts/common/              shared NixOS config
+flake.nix                  inputs + `mkHost` + the three host definitions
+home.nix                   home-manager (shared by all hosts)
+hosts/common/              configuration.nix (all hosts), laptop.nix (laptops only)
 hosts/<host>/              per-machine config + hardware-configuration.nix
-config/hypr/               hyprland.conf + host-laptop.conf / host-desktop.conf
+config/hypr/               hyprland.conf + host-{desktop,laptop,framework}.conf
 config/noctalia/           desktop shell config
 config/{zsh,starship,neovim,sioyek,xdg-desktop-portal-termfilechooser}/
 tools/weigh.sh             report closure size, heaviest packages, boot time, idle RAM

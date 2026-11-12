@@ -377,12 +377,6 @@ vim.lsp.config("pyrefly", {
 	capabilities = capabilities,
 })
 
--- Markdown
-vim.lsp.enable("marksman")
-vim.lsp.config("marksman", {
-	capabilities = capabilities,
-})
-
 -- Typst
 vim.lsp.enable("tinymist")
 vim.lsp.config("tinymist", {
@@ -392,29 +386,7 @@ vim.lsp.config("tinymist", {
 	},
 })
 
--- Spell Checking
-vim.lsp.config("ltex_plus", {
-	cmd = { "ltex-ls-plus" },
-	filetypes = { "typst" },
-	root_markers = { ".git" },
-	settings = {
-		ltex = {
-			language = "en-US",
-			checkFrequency = "edit", -- check as you type, not just on save
-			sentenceCacheSize = 2000,
-			disabledRules = {
-				["en-US"] = {
-					"WHITESPACE_RULE", -- false positives around Typst markup
-					"EN_QUOTES", -- Typst handles its own smart quotes
-				},
-			},
-			additionalRules = {
-				enablePickyRules = false, -- disable pedantic style warnings
-			},
-		},
-	},
-})
-vim.lsp.enable("ltex_plus")
+-- Typst buffer options (no spell-check LSP for now)
 vim.api.nvim_create_autocmd("FileType", {
 	pattern = "typst",
 	callback = function()

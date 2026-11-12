@@ -16,7 +16,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    aerion.url = "github:antoniosteiger/aerion"; # personal fork, mail client
+    # personal fork, mail client. Follows stable so it shares webkitgtk, gstreamer,
+    # glib etc. with the rest of the system instead of dragging in a second set.
+    aerion = {
+      url = "github:antoniosteiger/aerion";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     noctalia-greeter = {
       url = "github:noctalia-dev/noctalia-greeter";
@@ -32,48 +37,56 @@
       noctalia-greeter,
       ...
     }@inputs:
+    let
+      # One NixOS system per machine: hosts/<name>/configuration.nix, optional
+      # hardware modules, and the home-manager + greeter setup every host shares.
+      # hyprHost selects config/hypr/host-<hyprHost>.conf.
+      mkHost =
+        {
+          name,
+          hyprHost,
+          hardware ? [ ],
+        }:
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [
+            ./hosts/${name}/configuration.nix
+          ]
+          ++ hardware
+          ++ [
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                users.toni = import ./home.nix;
+                backupFileExtension = "backup";
+                extraSpecialArgs = { inherit hyprHost; };
+              };
+            }
+            noctalia-greeter.nixosModules.default
+          ];
+        };
+    in
     {
-      nixosConfigurations.lenovo_t14s_gen2 = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/lenovo_t14s_gen2/configuration.nix
-          nixos-hardware.nixosModules.lenovo-thinkpad-t14-amd-gen2
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              users.toni = import ./home.nix;
-              backupFileExtension = "backup";
-              extraSpecialArgs = {
-                hostType = "laptop";
-              };
-            };
-          }
-          noctalia-greeter.nixosModules.default
-        ];
-      };
+      nixosConfigurations = {
+        lenovo_t14s_gen2 = mkHost {
+          name = "lenovo_t14s_gen2";
+          hyprHost = "laptop";
+          hardware = [ nixos-hardware.nixosModules.lenovo-thinkpad-t14-amd-gen2 ];
+        };
 
-      nixosConfigurations.arcticbox = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/arcticbox/configuration.nix
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              users.toni = import ./home.nix;
-              backupFileExtension = "backup";
-              extraSpecialArgs = {
-                hostType = "desktop";
-              };
-            };
-          }
-          noctalia-greeter.nixosModules.default
-        ];
+        framework_13_pro = mkHost {
+          name = "framework_13_pro";
+          hyprHost = "framework";
+          hardware = [ nixos-hardware.nixosModules.framework-intel-core-ultra-series3 ];
+        };
+
+        arcticbox = mkHost {
+          name = "arcticbox";
+          hyprHost = "desktop";
+        };
       };
     };
 }

@@ -1,16 +1,13 @@
 {
   config,
   pkgs,
-  hostType ? "desktop",
+  hyprHost, # "desktop" | "laptop" | "framework", set per host in flake.nix
   ...
 }:
 
 let
   dotfiles = "${config.home.homeDirectory}/dotfiles/config";
   create_symlink = path: config.lib.file.mkOutOfStoreSymlink path;
-
-  # Determine which host-specific Hyprland config to use
-  hyprHostConfig = if hostType == "laptop" then "host-laptop.conf" else "host-desktop.conf";
 in
 {
   home.username = "toni";
@@ -19,7 +16,7 @@ in
 
   xdg.configFile."hypr/hyprland.conf".source = create_symlink "${dotfiles}/hypr/hyprland.conf";
   xdg.configFile."hypr/host-specific.conf".source =
-    create_symlink "${dotfiles}/hypr/${hyprHostConfig}";
+    create_symlink "${dotfiles}/hypr/host-${hyprHost}.conf";
   xdg.configFile."noctalia/config.toml".source = create_symlink "${dotfiles}/noctalia/config.toml";
   xdg.configFile."xdg-desktop-portal-termfilechooser/config".source =
     create_symlink "${dotfiles}/xdg-desktop-portal-termfilechooser/config";
@@ -372,13 +369,15 @@ in
               orphan = true;
             }
           ];
-          browser = [
+          swayimg = [
             {
-              run = "google-chrome-stable %s";
-              desc = "Chrome";
+              run = "swayimg %s";
+              desc = "swayimg";
               for = "unix";
               orphan = true;
             }
+          ];
+          browser = [
             {
               run = "firefox %s";
               desc = "Firefox";
@@ -419,15 +418,6 @@ in
               block = true;
             }
           ];
-          share = [
-            {
-              # Hands the files to the running (tray) instance and opens its Send tab.
-              run = "localsend_app %s";
-              desc = "Share (LocalSend)";
-              for = "unix";
-              orphan = true;
-            }
-          ];
           mail = [
             {
               # New message with the files attached (Aerion fork's --attach flag)
@@ -451,7 +441,6 @@ in
               ++ [
                 "copy"
                 "mail"
-                "share"
               ];
             withPrint =
               use:
@@ -460,7 +449,6 @@ in
                 "copy"
                 "print"
                 "mail"
-                "share"
               ];
           in
           [
@@ -478,7 +466,7 @@ in
             {
               mime = "image/*";
               use = withPrint [
-                "mpv"
+                "swayimg"
                 "open"
                 "gimp"
                 "inkscape"
@@ -647,8 +635,6 @@ in
         ];
       };
     };
-
-  programs.discord.enable = true;
 
   # Automount drives, phones (MTP) and cameras on plug-in. udiskie only handles
   # drives; PCManFM's windowless daemon mounts anything gvfs sees.

@@ -243,7 +243,7 @@ wallpaper_scheme = "faithful"
 
     [theme.templates]
     builtin_ids = [ "btop", "cava", "gtk3", "gtk4", "ghostty", "hyprland", "kcolorscheme", "qt", "starship" ]
-    community_ids = [ "claude-code", "discord", "inkscape", "neovim", "prismlauncher", "steam", "fastfetch", "sioyek", "yazi" ]
+    community_ids = [ "claude-code", "inkscape", "neovim", "prismlauncher", "steam", "fastfetch", "sioyek", "yazi" ]
 
 [wallpaper]
 directory = "/home/toni/dotfiles/backgrounds"

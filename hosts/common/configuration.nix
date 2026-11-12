@@ -6,6 +6,17 @@
   ...
 }:
 
+let
+  # capitaine-cursors-themed ships eight prebuilt variants; only Gruvbox is used.
+  gruvboxCursor = pkgs.capitaine-cursors-themed.overrideAttrs (_: {
+    installPhase = ''
+      runHook preInstall
+      mkdir -p $out/share/icons
+      cp -r "Capitaine Cursors (Gruvbox)" $out/share/icons/
+      runHook postInstall
+    '';
+  });
+in
 {
   system.stateVersion = "25.11"; # Never change
 
@@ -37,6 +48,13 @@
   systemd.services.NetworkManager-wait-online.enable = false;
   services.fwupd.enable = true;
 
+  # Man pages stay; the HTML/info/NixOS manuals are never read here and cost ~100 MiB.
+  documentation = {
+    doc.enable = false;
+    info.enable = false;
+    nixos.enable = false;
+  };
+
   # Generation retention is count-based. nix.gc can only express age
   # ("--delete-older-than"), which bounds nothing if you rebuild several times
   # a day; nh keeps the N newest across system, user and home-manager profiles.
@@ -54,9 +72,8 @@
     };
   };
 
-  networking.firewall = {
-    enable = false;
-  };
+  # Default-deny inbound. The only open port is 22 (services.openssh.openFirewall).
+  networking.firewall.enable = true;
 
   nix.settings.experimental-features = [
     "nix-command"
@@ -64,6 +81,7 @@
   ];
 
   networking.networkmanager.enable = true;
+  networking.modemmanager.enable = false; # no WWAN modem; on by default and pulls libqmi/libmbim/libqrtr
 
   # Language and Timezone
   time.timeZone = "Europe/Berlin";
@@ -75,12 +93,12 @@
 
   services.displayManager.noctalia-greeter = {
     enable = true;
-    # Same cursor as the Hyprland session, so the pointer does not change at handover.
-    cursorTheme.package = pkgs.capitaine-cursors-themed;
     settings = {
+      # Same cursor as the Hyprland session, so the pointer does not change at handover.
       cursor = {
         theme = "Capitaine Cursors (Gruvbox)";
         size = 24;
+        path = gruvboxCursor; # the greeter looks in <path>/share/icons
       };
       keyboard.layout = "de";
     };
@@ -146,7 +164,6 @@
     extraGroups = [
       "wheel"
       "networkmanager"
-      "input"
       "dialout"
       "tty"
     ]; # Enable 'sudo' for the user.
@@ -173,16 +190,21 @@
     noctalia-greeter
     accountsservice # user avatar in lockscreen
     hyprpicker # color pipette
-    capitaine-cursors-themed # replace hyprland cursor with gruvbox themed cursor.
     imagemagick
-    ghostscript # to convert pdf to images using imagemagick
     ffmpeg
     wl-clipboard
     typst
     tinymist
     sioyek
     pdfcpu # pdf manipulation, e.g. extract a page
-    mpv # media viewer/player: images, video, audio
+    # video/audio player. youtubeSupport = false drops yt-dlp and its deno runtime (~170 MiB).
+    # The mpris script (tiny) makes audio-only playback (no window) show up in the Noctalia
+    # media player, where it can be paused/stopped.
+    (mpv.override {
+      youtubeSupport = false;
+      scripts = [ mpvScripts.mpris ];
+    })
+    swayimg # image viewer (mpv is poor at photos); images only, videos at most as thumbnails
     curl
     fastfetch
     onlyoffice-desktopeditors
@@ -192,45 +214,37 @@
     # gst_all_1.gst-plugins-bad
     # gst_all_1.gst-plugins-ugly
     # gst_all_1.gst-libav
-    mattermost-desktop
     zulip
     gimp3 # for image editing
-    spotify
+    spotify-player # TUI; needs Spotify Premium
+    discordo # Discord TUI
     inkscape # for svg editing
     zotero
     pdfpc # presenter view with speaker notes and timer for PDFs
-    polylux2pdfpc # Extract pdfpc data from polylux based typst projects
     usbutils # lsusb & co.
     unzip
     unrar
-    gcc
     ripgrep
     fd
-    gnumake
     nil # nix language server
     nixfmt # nix formatter
     stylua # lua formatter
     ruff # python formatter and linter
     pyrefly # python language server
-    bun # JS runtime
-    biome # css, ts/js, html, json linter
-    typescript
     typescript-language-server
     lua-language-server
-    marksman # markdown lsp
     vscode-langservers-extracted
     cameractrls-gtk4
-    google-chrome # for compatibility and lighthouse
+    gruvboxCursor # replace hyprland cursor with gruvbox themed cursor.
     xhost # let containers open windows
     unstable.claude-code
-    ltex-ls-plus # spell checking in nvim
-    localsend # local network file sharing
-    anytype
+    (callPackage ../../pkgs/anytype-bin/package.nix { }) # official prebuilt .deb, see the file header
     gcr # for anytype
     inputs.aerion.packages.${pkgs.stdenv.hostPlatform.system}.default # mail (personal fork)
     hunspellDicts.en_US # system spellcheck dictionaries (Aerion, other Hunspell/Enchant apps)
     hunspellDicts.de_DE
     openvpn
+    ncdu
   ];
 
   # for gstreamer for onlyoffice
@@ -249,13 +263,10 @@
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gcr-ssh-agent.enable = false;
 
-  # file exchange between phone and PC:
-  programs.localsend.enable = true;
-
-  programs.vim.enable = true; # a system editor for root; toni gets neovim via home-manager
-
+  # No Nerd Font here on purpose: Ghostty embeds JetBrains Mono and Symbols Nerd Font
+  # itself (verified with an empty fontconfig), which saves ~220 MiB. Add
+  # nerd-fonts.symbols-only (5 MiB) if another terminal or app ever needs the icons.
   fonts.packages = with pkgs; [
-    nerd-fonts.jetbrains-mono
     dejavu_fonts
     (google-fonts.override { fonts = [ "HostGrotesk" ]; })
   ];
@@ -266,7 +277,13 @@
     enable = true;
   };
 
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false; # keys only
+      KbdInteractiveAuthentication = false; # PAM password prompts count as passwords too
+    };
+  };
   programs.ssh.startAgent = true;
 
   xdg.mime.defaultApplications = {
