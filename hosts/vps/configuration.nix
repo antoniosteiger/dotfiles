@@ -73,6 +73,24 @@
     ncdu
   ];
 
-  # Both NIC and IP config come from the provider; adjust if it does not offer DHCP.
-  networking.useDHCP = true;
+  # HostBRR does not run DHCP: static addressing (values from the provider panel).
+  networking = {
+    useDHCP = false;
+    interfaces.ens3.ipv4.addresses = [
+      {
+        address = "5.175.211.138";
+        prefixLength = 24;
+      }
+    ];
+    defaultGateway = {
+      address = "5.175.211.1";
+      interface = "ens3";
+    };
+    nameservers = [
+      "1.1.1.1"
+      "9.9.9.9"
+    ];
+    # IPv6 (2a0c:4ac1:4:302::a, gateway 2a0c:4ac1:4::1) is added once tested by hand,
+    # see docs/vps.md: the gateway is outside the /64, so it needs an on-link route.
+  };
 }

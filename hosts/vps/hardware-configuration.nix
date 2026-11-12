@@ -1,6 +1,6 @@
-# TODO: replace with the real `nixos-generate-config` output (or `--no-filesystems` if
-# you partition with disko / by hand) after booting the installer on the VPS. The values
-# below are placeholders so the configuration evaluates and builds.
+# Hardware of the HostBRR VPS: virtio-scsi disks, AMD host, BIOS boot.
+# Kernel module list comes from `nixos-generate-config --no-filesystems` run in the
+# installer; the filesystems are declared here by label.
 {
   config,
   lib,
@@ -12,38 +12,37 @@
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ]; # virtio drivers
 
   boot.initrd.availableKernelModules = [
-    "ahci"
-    "xhci_pci"
+    "ata_piix"
+    "uhci_hcd"
     "virtio_pci"
     "virtio_scsi"
-    "virtio_blk"
+    "ahci"
     "sd_mod"
-    "nvme"
+    "sr_mod"
   ];
+  boot.kernelModules = [ "kvm-amd" ];
 
-  # TODO: BIOS (most VPS) vs UEFI. BIOS/GRUB shown; for UEFI use
-  #   boot.loader.systemd-boot.enable = true; boot.loader.efi.canTouchEfiVariables = true;
+  # BIOS boot (no /sys/firmware/efi in the installer): GRUB into the MBR of the root disk.
   boot.loader.grub = {
     enable = true;
-    device = "/dev/vda"; # TODO: the NVMe/root disk as the provider presents it
+    device = "/dev/sda";
   };
 
-  # --- 240 GB NVMe: root (OS, /nix, PostgreSQL, Redis, caches, scratch, app code) -------
+  # --- 120 GB root disk (sda): OS, /nix, PostgreSQL, Redis, caches, scratch, app code ----
   fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos"; # TODO: `mkfs.ext4 -L nixos /dev/vdaN` or uuid
+    device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
     options = [ "noatime" ];
   };
 
-  # --- 8 TB HDD (provider-side RAID 6, shows up as one virtio disk, e.g. /dev/vdb) ------
-  # Bulk files only. Format once, by hand, NOT with the provider's defaults (5 % reserved
-  # blocks would waste 400 GB; the default inode ratio is wasteful for big files):
-  #   parted /dev/vdb -- mklabel gpt mkpart primary 0% 100%
-  #   mkfs.ext4 -m 0 -i 65536 -L bulk /dev/vdb1
-  # and protect the mount point from writes while the disk is missing:
-  #   mkdir -p ${config.vps.storage.hdd} && chattr +i ${config.vps.storage.hdd}
+  # --- 8 TB HDD (sdb; provider-side RAID 6, one virtual disk) ----------------------------
+  # Bulk files only. Created once, by hand (NOT with the provider's defaults: 5 % reserved
+  # blocks would waste 400 GB):
+  #   parted /dev/sdb -- mklabel gpt mkpart primary 0% 100%
+  #   mkfs.ext4 -m 0 -i 65536 -L bulk /dev/sdb1
+  # The mount point carries `chattr +i`, so nothing can write into it while the disk is missing.
   fileSystems.${config.vps.storage.hdd} = {
-    device = "/dev/disk/by-label/bulk"; # TODO: or by-uuid
+    device = "/dev/disk/by-label/bulk";
     fsType = "ext4";
     options = [
       "noatime" # no atime writes on bulk files
