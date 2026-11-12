@@ -55,6 +55,9 @@ in
   };
 
   nix.settings.allowed-users = [ "@wheel" ];
+  # Lets `nixos-rebuild --target-host toni@...` copy unsigned, locally built paths. toni
+  # already has passwordless sudo, so this grants nothing new in practice.
+  nix.settings.trusted-users = [ "toni" ];
   environment.defaultPackages = [ ];
 
   boot.kernel.sysctl = {

@@ -23,7 +23,7 @@ Backups go to Arcticbox (primary) and Cloudflare R2 (secondary). Secrets via sop
 internet ──80/443──▶ nginx ──▶ PHP-FPM ─▶ Nextcloud ─┐
 tailnet  ──────────▶ nginx ──▶ Vaultwarden           ├─▶ PostgreSQL / Redis (unix sockets)
                            ──▶ Paperless (granian)  ─┘
-                           ──▶ Gatus (Tailscale only)
+                           ──▶ Gatus (public by default, read-only)
 ```
 
 | Data | Where | Why |
@@ -193,8 +193,7 @@ Vaultwarden: `nix run nixpkgs#vaultwarden -- hash` (store the hash; the plaintex
 - **Nextcloud (and in general all records) must be DNS-only (grey cloud), not proxied:**
   Cloudflare's proxy caps request bodies at 100 MB (free plan), which breaks large uploads.
 - Public names: `A`/`AAAA` to the VPS's public IP.
-- Tailscale-only names (Gatus always, `/admin` hostnames if you move to tailscale
-  exposure): `A` to the VPS's **Tailscale IP** (`100.x.y.z`). DNS-01 gives them real
+- Tailscale-only names (only if you switch a service, e.g. Gatus, to `tailscale`; `/admin` lives on the Vaultwarden hostname and needs no separate record): `A` to the VPS's **Tailscale IP** (`100.x.y.z`). DNS-01 gives them real
   certificates without being reachable from the internet.
 
 ## Exposure toggles
@@ -206,7 +205,7 @@ Set in `hosts/vps/configuration.nix`; one line each.
 | `vps.nextcloud.exposure` | `public` | `tailscale`: no public share links, clients need Tailscale; DNS record must point at the Tailscale IP |
 | `vps.vaultwarden.exposure` | `public` | `/admin` is Tailscale-only in both cases |
 | `vps.paperless.exposure` | `public` | hardened when public (below); `tailscale` removes the exposure |
-| Gatus | Tailscale only | not configurable |
+| `vps.monitoring.exposure` (Gatus) | `public` | read-only page, no login; push API is blocked at nginx; endpoint URLs hidden. `tailscale`: DNS record -> Tailscale IP |
 
 "Tailscale-only" is enforced by an nginx ACL (`100.64.0.0/10`, `fd7a:115c:a1e0::/48`,
 loopback; everything else gets 403). Ports 80/443 stay open for the other vhosts. The
@@ -268,7 +267,7 @@ generation: restore the DB dump taken before it.
 
 ## Monitoring (Gatus)
 
-`https://<vps.domains.status>` (tailnet only). No notifications by default.
+`https://<vps.domains.status>` (public by default, read-only; see `vps.monitoring.exposure`). No notifications by default.
 
 - HTTP: Nextcloud `/status.php`, Vaultwarden `/alive`, Paperless `/accounts/login/`:
   status 200, response time, certificate expiry > 14 days.

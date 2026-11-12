@@ -134,6 +134,14 @@ in
       };
     };
 
+    # fail2ban refuses to start if a jail's logfile is missing, and nginx only creates it on
+    # its own start (fail2ban comes up first). Pre-create it; same owner/mode as nginx's
+    # LogsDirectory (0750 nginx:nginx).
+    systemd.tmpfiles.rules = [
+      "d /var/log/nginx 0750 nginx nginx - -"
+      "f /var/log/nginx/paperless.access.log 0640 nginx nginx - -"
+    ];
+
     # --- optional one-way ingest from Nextcloud ---------------------------------------
     # Nextcloud creates group-writable (nextcloud:nextcloud) files; the consumer joins that
     # group so it can read and delete them. tmpfiles must not re-own the folder to paperless.

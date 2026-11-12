@@ -40,7 +40,7 @@
     nextcloud.exposure = "public";
     vaultwarden.exposure = "public"; # /admin is Tailscale-only regardless
     paperless.exposure = "public";
-    # Gatus is Tailscale-only, not configurable.
+    # monitoring.exposure = "tailscale"; # Gatus is public by default (read-only, push API blocked)
 
     # paperless.consumeFromNextcloud.enable = true;
     # paperless.exporter.enable = true;
@@ -71,6 +71,7 @@
     sqlite
     htop
     ncdu
+    ghostty.terminfo # so `ssh` from Ghostty (TERM=xterm-ghostty) just works; terminfo only, ~100 KB
   ];
 
   # HostBRR does not run DHCP: static addressing (values from the provider panel).

@@ -37,11 +37,41 @@ in
     persistent = true;
   };
 
-  # Nextcloud has no RequiresMountsFor of its own for a custom datadir.
-  systemd.services = lib.genAttrs [
-    "nextcloud-setup"
-    "phpfpm-nextcloud"
-    "nextcloud-cron"
-    "nextcloud-update-db"
-  ] (_: { unitConfig.RequiresMountsFor = [ hdd ]; });
+  # The HDD is a `nofail` mount, which systemd does not order before
+  # systemd-tmpfiles-setup. At boot tmpfiles therefore ran against the still-empty mount
+  # point (immutable, so it could not write to the NVMe by mistake), and the service
+  # directories on the HDD were never created. This unit re-applies the tmpfiles rules for
+  # the HDD paths once the volume is really mounted; everything that writes there orders
+  # after it.
+  systemd.services =
+    {
+      vps-hdd-dirs = {
+        description = "Create service directories on the HDD once it is mounted";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig.RequiresMountsFor = [ hdd ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${config.systemd.package}/bin/systemd-tmpfiles --create --prefix=${hdd}";
+        };
+      };
+    }
+    // lib.genAttrs (
+      [
+        "nextcloud-setup"
+        "phpfpm-nextcloud"
+        "nextcloud-cron"
+        "nextcloud-update-db"
+        "paperless-scheduler"
+        "paperless-consumer"
+        "paperless-web"
+        "paperless-task-queue"
+      ]
+      ++ lib.optional config.services.paperless.exporter.enable "paperless-exporter"
+    ) (_: {
+      # Nextcloud has no RequiresMountsFor of its own for a custom datadir.
+      unitConfig.RequiresMountsFor = [ hdd ];
+      requires = [ "vps-hdd-dirs.service" ];
+      after = [ "vps-hdd-dirs.service" ];
+    });
 }

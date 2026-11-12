@@ -63,6 +63,12 @@ let
       inherit name url alerts;
       group = "services";
       interval = "2m";
+      # Hide what is being probed and how (harmless, but no reason to publish it).
+      ui = {
+        hide-url = true;
+        hide-hostname = true;
+        hide-conditions = true;
+      };
       conditions = [
         "[STATUS] == 200"
         "[RESPONSE_TIME] < ${toString time}"
@@ -158,6 +164,20 @@ in
       description = "Gatus durations: an external endpoint is failed if nothing was pushed within this time.";
     };
 
+    exposure = lib.mkOption {
+      type = lib.types.enum [
+        "public"
+        "tailscale"
+      ];
+      default = "public";
+      description = ''
+        "public": anyone can read the status page (read-only; Gatus has no login, and the
+        push API is blocked at nginx). It then shows service names, uptime, response
+        times, disk state and backup freshness; endpoint URLs are hidden. "tailscale":
+        only from the tailnet; point the DNS record at the Tailscale IP.
+      '';
+    };
+
     diskUsageLimitPercent = lib.mkOption {
       type = lib.types.ints.between 1 99;
       default = 85;
@@ -202,7 +222,7 @@ in
       environmentFile = config.sops.templates."gatus.env".path;
       settings = {
         web = {
-          address = "127.0.0.1"; # reached through nginx (Tailscale-only vhost)
+          address = "127.0.0.1"; # reached through nginx (see vps.monitoring.exposure)
           inherit port;
         };
         ui.title = "vps status";
@@ -249,9 +269,14 @@ in
       forceSSL = true;
       enableACME = true;
       acmeRoot = null;
-      # Tailscale-only, always (no option on purpose).
-      extraConfig = config.vps.nginx.securityHeaders + config.vps.nginx.tailscaleOnly;
+      extraConfig =
+        config.vps.nginx.securityHeaders
+        + lib.optionalString (cfg.exposure == "tailscale") config.vps.nginx.tailscaleOnly;
       locations."/".proxyPass = "http://127.0.0.1:${toString port}";
+      # The push API (backups, autoUpgrade, health) is never reachable through nginx, in
+      # either mode: the pushers talk to 127.0.0.1:${toString port} directly. Tokens would
+      # protect it anyway; this removes it from the public surface altogether.
+      locations."~ ^/api/v1/endpoints/[^/]+/external$".return = "403";
     };
 
     # Failure side of the push: units point OnFailure= here (restic jobs, autoUpgrade).
