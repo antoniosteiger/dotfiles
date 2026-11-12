@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-26.05";
     # Only used for individual packages we want ahead of the stable channel
-    # (see the `unstable` overlay in hosts/common/configuration.nix).
+    # (see the `unstable` overlay in hosts/common/desktop.nix).
     nixpkgs-unstable.url = "nixpkgs/nixos-unstable";
     nur = {
       url = "github:nix-community/NUR";
@@ -25,6 +25,12 @@
 
     noctalia-greeter = {
       url = "github:noctalia-dev/noctalia-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Secrets (age, derived from the hosts' ssh keys). Used by the vps and arcticbox only.
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -68,6 +74,15 @@
             noctalia-greeter.nixosModules.default
           ];
         };
+      # Headless servers: no home-manager, no greeter. Everything else (sops-nix, modules)
+      # is imported by the host config itself, so a host reads as one self-contained unit.
+      mkServer =
+        { name }:
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [ ./hosts/${name}/configuration.nix ];
+        };
     in
     {
       nixosConfigurations = {
@@ -87,6 +102,9 @@
           name = "arcticbox";
           hyprHost = "desktop";
         };
+
+        # Nextcloud + Vaultwarden + Paperless-ngx. See docs/vps.md.
+        vps = mkServer { name = "vps"; };
       };
     };
 }

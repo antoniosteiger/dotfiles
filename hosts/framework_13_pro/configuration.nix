@@ -7,9 +7,12 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../common/configuration.nix
+    ../common/base.nix
+    ../common/desktop.nix
     ../common/laptop.nix
   ];
+
+  system.stateVersion = "25.11"; # Never change
 
   networking.hostName = "tonix-framework";
 

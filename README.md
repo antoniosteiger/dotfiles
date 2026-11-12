@@ -1,12 +1,13 @@
 # tonix
 
-NixOS configuration for three machines, managed as a single flake.
+NixOS configuration for three PCs and one server, managed as a single flake.
 
 | Host | Hostname | Machine |
 | --- | --- | --- |
 | `lenovo_t14s_gen2` | `tonix-laptop` | ThinkPad T14s Gen2 (AMD) |
 | `framework_13_pro` | `tonix-framework` | Framework Laptop 13 Pro (Intel Core Ultra X7 358H) |
-| `arcticbox` | `tonix-desktop` | Desktop |
+| `arcticbox` | `tonix-desktop` | Desktop (also the backup target for the VPS) |
+| `vps` | `tonix-vps` | Headless server: Nextcloud, Vaultwarden, Paperless-ngx. See [docs/vps.md](docs/vps.md) |
 
 ## What this setup is
 
@@ -107,7 +108,7 @@ Renaming the flake attributes to match the hostnames would remove the need for
 
 ### Shared config needs modules added to *every* host
 
-`hosts/common/configuration.nix` is imported by all machines. If it uses an
+`hosts/common/desktop.nix` (with `base.nix`) is imported by all PCs. If it uses an
 option from a flake input's module (e.g. `services.displayManager.noctalia-greeter`),
 that module must be in the `modules` list of `mkHost` in `flake.nix`, which is
 where the home-manager and greeter modules already live. Hardware modules
@@ -214,7 +215,7 @@ Measured on the laptop; see `tools/weigh.sh`.
 | --- | --- |
 | `services.speechd` is **on by default** in NixOS and pulls espeak → mbrola → mbrola-voices | 645 MiB |
 | `nixos-hardware`'s `common/gpu/amd` turns on `hardware.graphics.enable32Bit`, duplicating Mesa + LLVM | 884 MiB |
-| `capitaine-cursors-themed` ships 8 prebuilt variants; `gruvboxCursor` in `hosts/common/configuration.nix` keeps only Gruvbox | 370 MiB (NAR) → ~46 MiB |
+| `capitaine-cursors-themed` ships 8 prebuilt variants; `gruvboxCursor` in `hosts/common/desktop.nix` keeps only Gruvbox | 370 MiB (NAR) → ~46 MiB |
 | Steam's FHS env pulls the full 223 MiB `glibc-locales` regardless of `i18n.supportedLocales` | 223 MiB |
 
 Most "minimise NixOS" advice (`environment.defaultPackages = []`, the `perlless`
@@ -244,3 +245,10 @@ tools/weigh.sh             report closure size, heaviest packages, boot time, id
 Files under `config/` are symlinked out of the store with
 `mkOutOfStoreSymlink`, so editing them takes effect without a rebuild (a
 Hyprland reload or app restart is usually enough).
+
+### Host layout
+
+`hosts/common/base.nix` is shared by **every** host (nix settings, locale, ssh, firewall,
+the `toni` user). `hosts/common/desktop.nix` (all desktop software and the one shared
+`systemPackages` list) is imported only by the PCs, never by the VPS. `system.stateVersion`
+is set per host.

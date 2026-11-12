@@ -18,8 +18,8 @@ let
   });
 in
 {
-  system.stateVersion = "25.11"; # Never change
-
+  # Shared base (nix settings, locale, ssh, firewall, user) is in base.nix; this file is
+  # PC-only. system.stateVersion is set per host.
   boot = {
     loader.efi.canTouchEfiVariables = true;
     loader.grub = {
@@ -59,8 +59,6 @@ in
   # ("--delete-older-than"), which bounds nothing if you rebuild several times
   # a day; nh keeps the N newest across system, user and home-manager profiles.
   nix.gc.automatic = false; # must not run alongside nh-clean
-  nix.optimise.automatic = true; # nightly hardlink dedup of identical files
-
   programs.nh = {
     enable = true;
     flake = "/home/toni/dotfiles";
@@ -72,22 +70,8 @@ in
     };
   };
 
-  # Default-deny inbound. The only open port is 22 (services.openssh.openFirewall).
-  networking.firewall.enable = true;
-
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
   networking.networkmanager.enable = true;
   networking.modemmanager.enable = false; # no WWAN modem; on by default and pulls libqmi/libmbim/libqrtr
-
-  # Language and Timezone
-  time.timeZone = "Europe/Berlin";
-
-  i18n.defaultLocale = "en_US.UTF-8";
-  console.keyMap = "de";
 
   services.xserver.xkb.layout = "de";
 
@@ -160,13 +144,12 @@ in
 
   users.defaultUserShell = pkgs.zsh;
   users.users.toni = {
-    isNormalUser = true;
+    # isNormalUser and "wheel" come from base.nix.
     extraGroups = [
-      "wheel"
       "networkmanager"
       "dialout"
       "tty"
-    ]; # Enable 'sudo' for the user.
+    ];
   };
 
   nixpkgs.config.allowUnfree = true;
@@ -277,13 +260,6 @@ in
     enable = true;
   };
 
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = false; # keys only
-      KbdInteractiveAuthentication = false; # PAM password prompts count as passwords too
-    };
-  };
   programs.ssh.startAgent = true;
 
   xdg.mime.defaultApplications = {

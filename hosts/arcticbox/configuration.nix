@@ -1,4 +1,7 @@
 {
+  config,
+  inputs,
+  lib,
   pkgs,
   ...
 }:
@@ -6,10 +9,31 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../common/configuration.nix
+    ../common/base.nix
+    ../common/desktop.nix
+    inputs.sops-nix.nixosModules.sops
+    ../../modules/sops-host.nix
+    ../../modules/restic-server.nix
   ];
 
+  system.stateVersion = "25.11"; # Never change
+
   networking.hostName = "tonix-desktop";
+
+  # Receives the VPS backups (append-only restic REST server, Tailscale only). Shipped OFF so
+  # a rebuild changes nothing until the storage exists. To switch on (docs/vps.md, "Arcticbox"):
+  # mount the big disk at dataDir, create secrets/arcticbox.yaml, set enable = true.
+  sopsHost.name = "arcticbox";
+  services.resticBackupServer = {
+    enable = false; # TODO: flip once /srv/restic is a real mount and the secrets exist
+    dataDir = "/srv/restic";
+    htpasswdFile = config.sops.secrets."restic/server_htpasswd".path;
+    repos.vps.passwordFile = config.sops.secrets."restic/vps_password".path;
+  };
+  sops.secrets = lib.mkIf config.services.resticBackupServer.enable {
+    "restic/vps_password".owner = "restic";
+    "restic/server_htpasswd".owner = "restic";
+  };
 
   # Desktop-specific: No power management needed
   powerManagement.enable = false;

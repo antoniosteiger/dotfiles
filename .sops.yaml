@@ -1,0 +1,18 @@
+# sops creation rules. The age recipients below are PLACEHOLDERS: replace them before
+# creating secrets/*.yaml (docs/vps.md, "Secrets").
+keys:
+  # Your personal key, kept OUTSIDE the servers (password manager + offline copy):
+  #   age-keygen -o ~/.config/sops/age/keys.txt   -> public key printed
+  - &admin age10xpjv9r98j6kddmvfyk93d8n24252jc7l0rjr7s62t3vg2lzgcesgh4xlr
+  # Host keys, derived from each host's SSH host key (never copy the private key):
+  #   ssh-keyscan <host> | ssh-to-age       (nix shell nixpkgs#ssh-to-age)
+  - &vps age18t8jngx066kkt52qmrcx06ptupylf2xnps7zu786qh4ef9vzka9slzgeah
+  - &arcticbox age1placeholderarcticboxplaceholderarcticboxplaceholderarct0
+
+creation_rules:
+  - path_regex: secrets/vps\.yaml$
+    key_groups:
+      - age: [*admin, *vps]
+  - path_regex: secrets/arcticbox\.yaml$
+    key_groups:
+      - age: [*admin, *arcticbox]
