@@ -209,6 +209,9 @@ in
   };
 
   config = {
+    # On the PATH for manual use / testing alerts: `sudo gatus-push <endpoint> success|failure [msg]`.
+    environment.systemPackages = [ pushBin ];
+
     sops.secrets =
       lib.genAttrs (map secret tokenNames) (_: { })
       // lib.optionalAttrs cfg.email.enable { "smtp/password" = { }; };

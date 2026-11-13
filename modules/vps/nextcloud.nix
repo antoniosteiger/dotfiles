@@ -9,6 +9,7 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.vps.nextcloud;
+  mail = config.vps.monitoring.email;
   hdd = config.vps.storage.hdd;
   domain = config.vps.domains.nextcloud;
   datadir = "${hdd}/nextcloud";
@@ -110,7 +111,27 @@ in
         tempdirectory = tmp; # NVMe: assembled uploads, zip downloads
         log_type = "systemd"; # not nextcloud.log in the datadir on the HDD
         loglevel = 2;
+        serverid = 1; # single PHP server; silences the admin-page hint
+      }
+      # Outgoing mail (password resets, share notifications) through the same SMTP account
+      # as the Gatus alerts. STARTTLS is negotiated automatically on port 587.
+      // lib.optionalAttrs mail.enable {
+        mail_smtpmode = "smtp";
+        mail_smtphost = mail.host;
+        mail_smtpport = mail.port;
+        mail_smtpauth = true;
+        mail_smtpname = mail.username;
+        mail_from_address = lib.head (lib.splitString "@" mail.from);
+        mail_domain = lib.last (lib.splitString "@" mail.from);
       };
+      # Only the SMTP password; merged into config.php at runtime, never in the store.
+      secretFile = lib.mkIf mail.enable config.sops.templates."nextcloud-secrets.json".path;
+    };
+
+    sops.secrets."smtp/password" = lib.mkIf mail.enable { };
+    sops.templates."nextcloud-secrets.json" = lib.mkIf mail.enable {
+      owner = "nextcloud";
+      content = builtins.toJSON { mail_smtppassword = config.sops.placeholder."smtp/password"; };
     };
 
     # nextcloud-cron.timer (every 5 min, systemd) is created by the module: background
