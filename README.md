@@ -19,7 +19,7 @@ program, and also generates the colour themes for other applications from a
 single palette.
 
 Everything is declared here. The only things not in this repo are secrets
-(1Password, the GNOME keyring) and Noctalia's own generated theme files.
+(the Vaultwarden vault, the GNOME keyring) and Noctalia's own generated theme files.
 
 ### System layers
 
@@ -41,7 +41,7 @@ Everything is declared here. The only things not in this repo are secrets
 | File picker | `xdg-desktop-portal-termfilechooser` → yazi in a floating Ghostty |
 | Removable media | udisks2 + udiskie (auto-mount) |
 | Secrets / keyring | GNOME Keyring (`login` keyring, unlocked by PAM) |
-| Passwords | 1Password |
+| Passwords | Bitwarden (client) + Vaultwarden (VPS) |
 | Terminal | Ghostty |
 | Shell | zsh + starship |
 | Editor | Neovim (root gets the NixOS default, nano) |

@@ -36,18 +36,12 @@ in
       default = "16G";
     };
 
-    previewsToNvme.instanceId = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      example = "ocabc123def4";
-      description = ''
-        Nextcloud's instanceid (`sudo nextcloud-occ config:system:get instanceid`), known
-        only after the first install. When set, appdata_<id>/preview (the thumbnail cache:
-        thousands of tiny random writes) is bind-mounted from the NVMe instead of living
-        on the HDD. It is a cache, regenerated on demand and excluded from backups.
-        Worth it if you keep photo libraries; pointless for documents only.
-      '';
-    };
+    previewsToNvme.enable = lib.mkEnableOption ''
+      thumbnail cache on the NVMe: appdata_<instanceid>/preview (thousands of tiny random
+      writes) is bind-mounted from /var/lib/nextcloud-previews instead of living on the
+      HDD. The instance id is only known after the first install, so a small service reads
+      it at boot (after nextcloud-setup) and mounts. It is a cache, regenerated on demand
+      and excluded from backups. Worth it if you keep photo libraries'';
   };
 
   config = {
@@ -80,6 +74,7 @@ in
         inherit (config.services.nextcloud.package.packages.apps)
           calendar
           contacts
+          memories
           notes
           tasks
           ;
@@ -112,6 +107,13 @@ in
         log_type = "systemd"; # not nextcloud.log in the datadir on the HDD
         loglevel = 2;
         serverid = 1; # single PHP server; silences the admin-page hint
+
+        # Memories: the app's bundled exiftool / go-vod binaries are prebuilt for FHS
+        # distros and do not run on NixOS, so use the Nix one and skip video transcoding
+        # (originals stream directly). Places/map view needs a separate planet database: off.
+        "memories.exiftool" = lib.getExe pkgs.exiftool;
+        "memories.exiftool_no_local" = true;
+        "memories.vod.disable" = true;
       }
       # Outgoing mail (password resets, share notifications) through the same SMTP account
       # as the Gatus alerts. STARTTLS is negotiated automatically on port 587.
@@ -146,23 +148,36 @@ in
       extraConfig = lib.optionalString (cfg.exposure == "tailscale") config.vps.nginx.tailscaleOnly;
     };
 
-    # Optional: thumbnail cache on the NVMe. Mounted over a directory inside the HDD
-    # datadir; the HDD mount is its parent, so systemd orders it correctly.
-    fileSystems = lib.mkIf (cfg.previewsToNvme.instanceId != null) {
-      "${datadir}/data/appdata_${cfg.previewsToNvme.instanceId}/preview" = {
-        device = "/var/lib/nextcloud-previews";
-        options = [
-          "bind"
-          "nofail"
-        ];
+    # Optional: thumbnail cache on the NVMe, bind-mounted over a directory inside the HDD
+    # datadir. Done by a service (not fileSystems) because the path contains the instance
+    # id, which Nextcloud generates at install. Wants (not Requires) nextcloud-setup so a
+    # setup restart during a switch does not bounce the mount. Existing previews on the
+    # HDD are hidden by the mount and regenerate on the NVMe.
+    systemd.services.nextcloud-previews-nvme = lib.mkIf cfg.previewsToNvme.enable {
+      description = "Bind-mount Nextcloud's preview cache from the NVMe";
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "nextcloud-setup.service" ];
+      after = [ "nextcloud-setup.service" ];
+      before = [
+        "phpfpm-nextcloud.service"
+        "nextcloud-cron.service"
+      ];
+      unitConfig.RequiresMountsFor = [ hdd ];
+      path = [
+        pkgs.coreutils
+        pkgs.util-linux
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
       };
-    };
-    systemd.tmpfiles.settings."20-nextcloud-previews" = lib.mkIf (cfg.previewsToNvme.instanceId != null) {
-      "/var/lib/nextcloud-previews".d = {
-        user = "nextcloud";
-        group = "nextcloud";
-        mode = "0750";
-      };
+      script = ''
+        id=$(${lib.getExe config.services.nextcloud.occ} config:system:get instanceid)
+        [ -n "$id" ] || { echo "no instanceid yet" >&2; exit 1; }
+        app=${datadir}/data/appdata_$id
+        install -d -o nextcloud -g nextcloud -m 0750 /var/lib/nextcloud-previews "$app" "$app/preview"
+        mountpoint -q "$app/preview" || mount --bind /var/lib/nextcloud-previews "$app/preview"
+      '';
     };
   };
 }

@@ -218,6 +218,7 @@ in
     lua-language-server
     vscode-langservers-extracted
     cameractrls-gtk4
+    bitwarden-desktop # password manager (Vaultwarden on the VPS as server)
     gruvboxCursor # replace hyprland cursor with gruvbox themed cursor.
     xhost # let containers open windows
     unstable.claude-code
@@ -234,13 +235,7 @@ in
   # environment.sessionVariables.GST_PLUGIN_PATH_1_0 = "/run/current-system/sw/lib/gstreamer-1.0";
   # environment.pathsToLink = [ "/lib/gstreamer-1.0" ];
 
-  #1password:
-  programs._1password.enable = true;
   programs.gpu-screen-recorder.enable = true; # recording backend for the noctalia screen_recorder plugin; sets up the capability wrapper for KMS capture
-  programs._1password-gui = {
-    enable = true;
-    polkitPolicyOwners = [ "toni" ];
-  };
 
   # For anytype:
   services.gnome.gnome-keyring.enable = true;

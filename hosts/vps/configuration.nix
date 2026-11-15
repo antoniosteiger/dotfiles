@@ -44,7 +44,7 @@
 
     # paperless.consumeFromNextcloud.enable = true;
     # paperless.exporter.enable = true;
-    # nextcloud.previewsToNvme.instanceId = "ocXXXXXXXX"; # after first install
+    nextcloud.previewsToNvme.enable = true; # thumbnails on the NVMe (photo library)
 
     # Backups. Secondary repo in Cloudflare R2 (the account id is the hex label in the
     # S3 endpoint URL, not a secret). Arcticbox is the primary target.
@@ -69,6 +69,7 @@
     git # flake fetching, editing this repo on the box in an emergency
     restic # manual restores
     sqlite
+    rsync # bulk imports straight into the Nextcloud datadir (docs/vps.md)
     htop
     ncdu
     ghostty.terminfo # so `ssh` from Ghostty (TERM=xterm-ghostty) just works; terminfo only, ~100 KB

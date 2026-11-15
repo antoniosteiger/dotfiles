@@ -47,9 +47,9 @@ in
 
       # Extensions
       ExtensionSettings = {
-        # 1Password:
-        "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/{d634138d-c276-4fc8-924b-40a0ea21d284}/latest.xpi";
+        # Bitwarden:
+        "{446900e4-71c2-419f-a6a7-df9c091e268b}" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/{446900e4-71c2-419f-a6a7-df9c091e268b}/latest.xpi";
           installation_mode = "normal_installed";
         };
         # Vimium

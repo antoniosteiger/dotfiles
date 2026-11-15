@@ -59,12 +59,12 @@ HostBRR presents the RAID 6 as one virtual `/dev/vdb`. Consequences, all account
 Nextcloud keeps thumbnails in `data/appdata_<id>/preview`: thousands of tiny files,
 written on demand, read randomly. On a network-attached HDD that makes gallery browsing
 slow. **Worth it if you have photo libraries**; irrelevant for documents. It is a pure
-cache, so it also gets excluded from backups. It needs the instance id, which exists only
-after the first install, hence an option instead of a default:
-`vps.nextcloud.previewsToNvme.instanceId = "<id>"` (bind mount from
-`/var/lib/nextcloud-previews`). Get the id with
-`sudo nextcloud-occ config:system:get instanceid`. The rest of `appdata` (theming,
-avatars, app data) stays on the HDD, it is small.
+cache, so it also gets excluded from backups. The path contains the instance id, which
+exists only after the first install, so `vps.nextcloud.previewsToNvme.enable = true`
+starts a small service (`nextcloud-previews-nvme`) that reads the id with occ after
+`nextcloud-setup` and bind-mounts `/var/lib/nextcloud-previews` over
+`appdata_<id>/preview`. The rest of `appdata` (theming, avatars, app data) stays on the
+HDD, it is small.
 
 ## Decisions and why
 
