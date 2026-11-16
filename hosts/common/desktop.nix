@@ -1,5 +1,5 @@
 {
-  # config,
+  config,
   lib,
   pkgs,
   inputs,
@@ -250,6 +250,35 @@ in
   ];
 
   services.udisks2.enable = true; # auto mounting external drives
+
+  # Tailscale on every PC (laptops and the desktop; the VPS has its own in hardening.nix).
+  # tailscaled starts at boot (multi-user.target) and keeps its login in /var/lib/tailscale.
+  # One-time, per machine: `sudo tailscale up`.
+  services.tailscale = {
+    enable = true;
+    openFirewall = true; # UDP 41641, lets peers connect directly instead of via relays
+    useRoutingFeatures = "client"; # exit nodes / subnet routes; sets the rp_filter this needs
+    extraSetFlags = [ "--operator=toni" ]; # `tailscale file get/cp` etc. without sudo
+  };
+  # MagicDNS names (tonix-vps, ...) need a resolver Tailscale can configure; with
+  # NetworkManager alone it would fight over /etc/resolv.conf.
+  services.resolved.enable = true;
+
+  # Taildrop receiver: files sent to this machine land in ~/Downloads as they arrive
+  # (without this they stay in tailscaled's inbox until `tailscale file get`). Private
+  # umask; a name clash gets a numbered suffix instead of being skipped. Fails and retries
+  # until the machine is logged in to Tailscale.
+  systemd.user.services.tailreceive = {
+    description = "Taildrop file receiver";
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      UMask = "0077";
+      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/Downloads";
+      ExecStart = "${config.services.tailscale.package}/bin/tailscale file get --verbose --conflict=rename --loop %h/Downloads";
+      Restart = "always";
+      RestartSec = "30s";
+    };
+  };
 
   programs.gnupg.agent = {
     enable = true;

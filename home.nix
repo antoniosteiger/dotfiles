@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   hyprHost, # "desktop" | "laptop" | "framework", set per host in flake.nix
   ...
@@ -18,6 +19,15 @@ in
   xdg.configFile."hypr/host-specific.conf".source =
     create_symlink "${dotfiles}/hypr/host-${hyprHost}.conf";
   xdg.configFile."noctalia/config.toml".source = create_symlink "${dotfiles}/noctalia/config.toml";
+
+  # hyprland.conf sources ~/.config/hypr/noctalia.conf, which Noctalia generates (colours)
+  # and which is therefore not in the repo. On a fresh install Hyprland starts before
+  # Noctalia has written it, and a missing `source` file is a config error. Create an
+  # empty placeholder once; Noctalia overwrites it and Hyprland reloads on change.
+  home.activation.noctaliaHyprlandStub = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    stub="${config.xdg.configHome}/hypr/noctalia.conf"
+    [ -e "$stub" ] || { mkdir -p "$(dirname "$stub")" && : > "$stub"; }
+  '';
   xdg.configFile."xdg-desktop-portal-termfilechooser/config".source =
     create_symlink "${dotfiles}/xdg-desktop-portal-termfilechooser/config";
   xdg.configFile."xdg-desktop-portal-termfilechooser/yazi-wrapper.sh".source =
@@ -303,6 +313,56 @@ in
         '';
       };
 
+      # Send files/folders to another of your Tailscale devices (Taildrop). Folders are
+      # zipped on the fly (streamed, no temp file). `tailscale` comes from the system
+      # (services.tailscale), so its version always matches the daemon.
+      yaziTaildrop = pkgs.writeShellApplication {
+        name = "yazi-taildrop";
+        runtimeInputs = [
+          pkgs.fzf
+          pkgs.zip
+          pkgs.gawk
+          pkgs.coreutils
+        ];
+        text = ''
+          done_wait() { read -rp "Press enter to close" _; }
+
+          # `file cp --targets` prints one device per line: ip, name, status (tab separated).
+          targets=$(tailscale file cp --targets 2>&1) || {
+            echo "tailscale: $targets"
+            done_wait
+            exit 1
+          }
+          if [ -z "$targets" ]; then
+            echo "No Taildrop targets: is Tailscale logged in, and is another device online?"
+            done_wait
+            exit 1
+          fi
+          target=$(printf '%s\n' "$targets" | fzf --select-1 --prompt="Send $# item(s) to > " \
+            --delimiter=$'\t' --with-nth=2.. | awk -F'\t' '{print $2}') || exit 0
+          [ -n "$target" ] || exit 0
+
+          for f in "$@"; do
+            path=$(realpath "$f")
+            name=$(basename "$path")
+            echo "-> $name"
+            if [ -d "$path" ]; then
+              if (cd "$(dirname "$path")" && zip -qr - "$name") \
+                | tailscale file cp --name="$name.zip" - "$target:"; then
+                echo "   sent as $name.zip"
+              else
+                echo "   FAILED: $name"
+              fi
+            elif tailscale file cp "$path" "$target:"; then
+              echo "   sent"
+            else
+              echo "   FAILED: $name"
+            fi
+          done
+          done_wait
+        '';
+      };
+
       # Print through CUPS; asks for a printer when there is more than one.
       yaziPrint = pkgs.writeShellApplication {
         name = "yazi-print";
@@ -410,6 +470,14 @@ in
               block = true;
             }
           ];
+          taildrop = [
+            {
+              run = "${yaziTaildrop}/bin/yazi-taildrop %s";
+              desc = "Send via Taildrop";
+              for = "unix";
+              block = true;
+            }
+          ];
           print = [
             {
               run = "${yaziPrint}/bin/yazi-print %s";
@@ -441,6 +509,7 @@ in
               ++ [
                 "copy"
                 "mail"
+                "taildrop"
               ];
             withPrint =
               use:
@@ -449,6 +518,7 @@ in
                 "copy"
                 "print"
                 "mail"
+                "taildrop"
               ];
           in
           [
