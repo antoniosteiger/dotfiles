@@ -46,4 +46,5 @@
   # Guide: "might be necessary once to make the update succeed". Uncomment if
   # `fwupdmgr update` fails to schedule the capsule.
   # services.fwupd.uefiCapsuleSettings.DisableCapsuleUpdateOnDisk = true;
+  services.fprintd.enable = true;
 }
