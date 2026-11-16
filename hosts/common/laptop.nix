@@ -8,6 +8,7 @@
   powerManagement.enable = true;
   services.power-profiles-daemon.enable = true; # also stops nixos-hardware from enabling TLP
   services.upower.enable = true; # used to get battery info
+  hardware.bluetooth.enable = true; # BlueZ; Noctalia's bluetooth bar widget hides without it
 
   # Touchpad behaviour itself lives in config/hypr/host-*.conf (Hyprland, not X11).
   services.libinput.enable = true;
