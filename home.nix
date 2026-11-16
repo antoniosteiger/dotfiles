@@ -96,28 +96,62 @@ in
     };
   };
 
-  # Launcher entries for terminal apps. Neither package ships a .desktop file, so Noctalia's
-  # launcher does not list them; like yazi below they start ghostty themselves.
-  xdg.desktopEntries.spotify-player = {
-    name = "Spotify Player";
-    genericName = "Music Player";
-    exec = "ghostty -e spotify_player";
-    terminal = false;
-    categories = [
-      "Audio"
-      "Music"
-    ];
-  };
-  xdg.desktopEntries.discordo = {
-    name = "Discordo";
-    genericName = "Discord Client";
-    exec = "ghostty -e discordo";
-    terminal = false;
-    categories = [
-      "Network"
-      "Chat"
-    ];
-  };
+  # Spotify and Discord as Firefox PWAs (PWAsForFirefox): own window, launcher entry and
+  # icon, but no Electron. Replaces spotify-player (librespot can't get audio keys for some
+  # accounts, librespot#1649) and discordo. The runtime is nixpkgs' firefox-unwrapped, so
+  # nothing is downloaded at runtime. Both sites share one PWA profile, separate from the
+  # main Firefox profile (own logins/cookies).
+  # Keys are ULIDs (26 chars from 0-9A-Z minus I L O U); any fixed valid value works.
+  # Manifests are inline data: URLs: Discord has none, and Spotify's URL is content-hashed.
+  programs.firefoxpwa =
+    let
+      manifest = m: "data:application/manifest+json," + lib.escapeURL (builtins.toJSON m);
+    in
+    {
+      enable = true;
+      # Stable's 2.18 predates the Firefox 156/158 fixes: on the Firefox 160 runtime the
+      # window opens as a blank "Mozilla Firefox" and never loads the site.
+      package = pkgs.unstable.firefoxpwa;
+      profiles."0PFF09CB90XY04E535T1F0H4A6" = {
+        name = "Apps";
+        sites."01ZH59EWRYW1A7AA59A9QFCWAD" = rec {
+          name = "Spotify";
+          url = "https://open.spotify.com/";
+          manifestUrl = manifest {
+            inherit name;
+            start_url = url;
+            scope = url;
+            display = "standalone";
+          };
+          desktopEntry.icon = pkgs.fetchurl {
+            url = "https://open.spotifycdn.com/cdn/images/icons/Spotify_512.7e07796d.png";
+            hash = "sha256-fgd5bZ+qDCkeJQYNLRQJo1WKUBHGaoufVhlkC8PLR+0=";
+          };
+          desktopEntry.categories = [
+            "Audio"
+            "Music"
+          ];
+        };
+        sites."0CAZGN5HMPQX4KN2FPDP1QVA24" = {
+          name = "Discord";
+          url = "https://discord.com/app";
+          manifestUrl = manifest {
+            name = "Discord";
+            start_url = "https://discord.com/app";
+            scope = "https://discord.com/";
+            display = "standalone";
+          };
+          desktopEntry.icon = pkgs.fetchurl {
+            url = "https://discord.com/assets/favicon.ico";
+            hash = "sha256-Eo4gs7FcZd1HDLnQ3I/hDi/59y+sme5iGwGjke9rgcc=";
+          };
+          desktopEntry.categories = [
+            "Network"
+            "Chat"
+          ];
+        };
+      };
+    };
 
   # Open folders in yazi from GUI apps. yazi.desktop has Terminal=true, which xdg-open
   # ignores on Hyprland: it runs a bare `yazi` without a tty, which dies silently.
