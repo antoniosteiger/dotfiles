@@ -96,6 +96,29 @@ in
     };
   };
 
+  # Launcher entries for terminal apps. Neither package ships a .desktop file, so Noctalia's
+  # launcher does not list them; like yazi below they start ghostty themselves.
+  xdg.desktopEntries.spotify-player = {
+    name = "Spotify Player";
+    genericName = "Music Player";
+    exec = "ghostty -e spotify_player";
+    terminal = false;
+    categories = [
+      "Audio"
+      "Music"
+    ];
+  };
+  xdg.desktopEntries.discordo = {
+    name = "Discordo";
+    genericName = "Discord Client";
+    exec = "ghostty -e discordo";
+    terminal = false;
+    categories = [
+      "Network"
+      "Chat"
+    ];
+  };
+
   # Open folders in yazi from GUI apps. yazi.desktop has Terminal=true, which xdg-open
   # ignores on Hyprland: it runs a bare `yazi` without a tty, which dies silently.
   # This entry launches ghostty itself, so it works via xdg-open, gio and portals.
