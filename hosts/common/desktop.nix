@@ -199,7 +199,7 @@ in
     # gst_all_1.gst-libav
     zulip
     gimp3 # for image editing
-    spotify-player # TUI; needs Spotify Premium
+    unstable.spotify-player # TUI; needs Spotify Premium. Unstable: stable 0.23 breaks on Spotify's 2026 Web API/token changes
     discordo # Discord TUI
     inkscape # for svg editing
     zotero
