@@ -47,4 +47,9 @@
   # `fwupdmgr update` fails to schedule the capsule.
   # services.fwupd.uefiCapsuleSettings.DisableCapsuleUpdateOnDisk = true;
   services.fprintd.enable = true;
+  # NixOS adds fingerprint auth to every PAM service. At the greeter that means a finger
+  # logs you in without a password ever reaching PAM, so gnome-keyring cannot unlock
+  # ("keyring did not get unlocked"). Password-only at the greeter; sudo and the lock
+  # screen keep the fingerprint.
+  security.pam.services.greetd.fprintAuth = false;
 }
