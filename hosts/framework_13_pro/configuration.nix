@@ -4,6 +4,24 @@
   ...
 }:
 
+let
+  # The Level Zero driver (libze_intel_gpu) with the Intel graphics compiler in its RPATH.
+  # The compute runtime loads libigc / libigdfcl by name at run time. nixpkgs' postFixup only
+  # gives the OpenCL library (libigdrcl.so) a path to intel-graphics-compiler, so a Level Zero
+  # program cannot load it. Without the compiler the runtime keeps one-page placeholders for its
+  # mid-thread preemption buffers, and the GPU hangs under load ("Fault response: Unsuccessful
+  # -EINVAL", "Engine memory CAT error", engine reset). This copy only adds the RPATH; nothing
+  # is recompiled.
+  levelZeroDriver =
+    pkgs.runCommand "intel-compute-runtime-drivers-with-compiler" { nativeBuildInputs = [ pkgs.patchelf ]; }
+      ''
+        cp -r ${pkgs.intel-compute-runtime.drivers} $out
+        chmod -R u+w $out
+        for f in $(find $out/lib -type f -name 'libze_intel_gpu.so.*'); do
+          patchelf --add-rpath ${pkgs.intel-graphics-compiler}/lib "$f"
+        done
+      '';
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -27,16 +45,39 @@
   # Gen12+ only: the media driver (VA-API) + vpl-gpu-rt/compute-runtime that come
   # with it. Skips the legacy intel-vaapi-driver and the unfree intel-ocl.
   hardware.intelgpu.vaapiDriver = "intel-media-driver";
-  # nixos-hardware would also install intel-compute-runtime (OpenCL/Level Zero) and
-  # its 260 MiB shader compiler. Nothing here uses OpenCL, so keep only video decode.
-  # Drop this line if you ever want OpenCL (darktable, local inference, ...).
+  # Video decode (media driver, vpl-gpu-rt) plus the compute stack (OpenCL and Level Zero),
+  # which costs ~260 MiB for the graphics compiler and is what local inference needs.
+  # intel-compute-runtime provides OpenCL (its libigdrcl already finds the compiler);
+  # levelZeroDriver is the Level Zero driver with the same fix (see the let block above).
   hardware.graphics.extraPackages = lib.mkForce (
     with pkgs;
     [
       intel-media-driver
       vpl-gpu-rt
+      intel-compute-runtime
+      levelZeroDriver
+      level-zero
     ]
   );
+
+  # Newest Intel GPU firmware. nixpkgs' linux-firmware (20261019) carries GuC 70.72.1
+  # for Panther Lake; upstream has had GuC 70.83.0 since 2026-11-14 (linux-firmware
+  # commit f51d6d83). This pins the whole linux-firmware tree to upstream main as of
+  # 2026-11-17, which contains it. Remove the block once nixpkgs ships a linux-firmware
+  # newer than 20261019; check with `journalctl -k -b | grep "GuC firmware"` (>= 70.83.0).
+  nixpkgs.overlays = [
+    (final: prev: {
+      linux-firmware = prev.linux-firmware.overrideAttrs (old: {
+        version = "20261019-unstable-2026-11-17";
+        src = prev.fetchFromGitLab {
+          owner = "kernel-firmware";
+          repo = "linux-firmware";
+          rev = "6e26a246cf6194dd4b75c5d304013e66ebc0f2ae";
+          hash = "sha256-o37Y44aYj90LtlX/IkLIuhrkI4sVZZcdeCBNCBUAD94=";
+        };
+      });
+    })
+  ];
 
   # Framework guide, step 8: firmware via fwupdmgr (fwupd itself is enabled in
   # common and by the nixos-hardware module). For Intel models even the stable

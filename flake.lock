@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793805408,
-        "narHash": "sha256-wh5R1kW5e05HBB0vxKlGI/6MLOLbKygJfOqHytRSB00=",
+        "lastModified": 1794849583,
+        "narHash": "sha256-COoYBiQA8bVYZABRyOamdsv3qWXew6OM32PE1iPxzuE=",
         "owner": "antoniosteiger",
         "repo": "aerion",
-        "rev": "40329dc022a0afc1c78aa5ed8677b2df98908797",
+        "rev": "019928eb68ca2b3d6f035724fdc79c353e5e4ac9",
         "type": "github"
       },
       "original": {

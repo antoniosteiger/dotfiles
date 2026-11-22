@@ -110,10 +110,29 @@ in
 
         # Memories: the app's bundled exiftool / go-vod binaries are prebuilt for FHS
         # distros and do not run on NixOS, so use the Nix one and skip video transcoding
-        # (originals stream directly). Places/map view needs a separate planet database: off.
+        # (originals stream directly).
         "memories.exiftool" = lib.getExe pkgs.exiftool;
         "memories.exiftool_no_local" = true;
         "memories.vod.disable" = true;
+
+        # Previews: the defaults plus HEIC (iPhone photos; PHP's Imagick already has
+        # libheif) and Movie (video/Live Photo thumbnails, via ffmpeg below).
+        enabledPreviewProviders = [
+          "OC\\Preview\\PNG"
+          "OC\\Preview\\JPEG"
+          "OC\\Preview\\GIF"
+          "OC\\Preview\\BMP"
+          "OC\\Preview\\XBitmap"
+          "OC\\Preview\\Krita"
+          "OC\\Preview\\WebP"
+          "OC\\Preview\\MarkDown"
+          "OC\\Preview\\TXT"
+          "OC\\Preview\\OpenDocument"
+          "OC\\Preview\\HEIC"
+          "OC\\Preview\\Movie"
+        ];
+        preview_ffmpeg_path = "${pkgs.ffmpeg-headless}/bin/ffmpeg";
+        preview_ffprobe_path = "${pkgs.ffmpeg-headless}/bin/ffprobe";
       }
       # Outgoing mail (password resets, share notifications) through the same SMTP account
       # as the Gatus alerts. STARTTLS is negotiated automatically on port 587.

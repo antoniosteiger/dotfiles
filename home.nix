@@ -219,6 +219,7 @@ in
       # Utilities
       guess-indent-nvim
       gitsigns-nvim
+      diffview-nvim
       which-key-nvim
       ccc-nvim
 

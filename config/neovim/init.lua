@@ -200,6 +200,50 @@ require("gitsigns").setup({
 	},
 })
 
+-- Diffview (PR review: file list on the left, side-by-side diff on the right)
+require("diffview").setup({})
+
+-- Review the current branch against a base, in two prompts:
+--   1. base: branch to compare against (remembered between uses, starts as origin/dev)
+--   2. paths: space-separated folders/files to limit the review to (empty = everything,
+--      remembered between uses, Tab completes paths)
+-- We diff the merge-base (where the branch split off the base) against the WORKING TREE, so
+-- you see only what this branch changed, and the right pane is the real file (editable).
+-- A range like base...HEAD would make both sides read-only git snapshots.
+local review_last = { base = "origin/dev", paths = "" }
+local function review()
+	vim.ui.input({ prompt = "Base: ", default = review_last.base }, function(base)
+		if not base or base == "" then
+			return
+		end
+		vim.ui.input({
+			prompt = "Only paths (empty = all): ",
+			default = review_last.paths,
+			completion = "file",
+		}, function(paths)
+			if paths == nil then
+				return -- cancelled
+			end
+			review_last = { base = base, paths = paths }
+			local out = vim.fn.systemlist({ "git", "merge-base", base, "HEAD" })
+			if vim.v.shell_error ~= 0 or not out[1] then
+				vim.notify("git merge-base failed for '" .. base .. "' (fetched? right name?)", vim.log.levels.ERROR)
+				return
+			end
+			local cmd = "DiffviewOpen " .. out[1]
+			if paths ~= "" then
+				cmd = cmd .. " -- " .. paths
+			end
+			vim.cmd(cmd)
+		end)
+	end)
+end
+vim.keymap.set("n", "<leader>gr", review, { desc = "[G]it [R]eview branch vs base" })
+vim.keymap.set("n", "<leader>gd", "<cmd>DiffviewOpen<CR>", { desc = "[G]it [D]iff working tree" })
+vim.keymap.set("n", "<leader>gh", "<cmd>DiffviewFileHistory %<CR>", { desc = "[G]it file [H]istory (current file)" })
+vim.keymap.set("n", "<leader>gH", "<cmd>DiffviewFileHistory<CR>", { desc = "[G]it branch [H]istory" })
+vim.keymap.set("n", "<leader>gq", "<cmd>DiffviewClose<CR>", { desc = "[G]it diffview [Q]uit" })
+
 -- Which-key
 require("which-key").setup({
 	delay = 200,
@@ -223,6 +267,7 @@ require("which-key").setup({
 		{ "<leader>s", group = "[S]earch" },
 		{ "<leader>t", group = "[T]oggle" },
 		{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
+		{ "<leader>g", group = "[G]it review" },
 	},
 })
 
