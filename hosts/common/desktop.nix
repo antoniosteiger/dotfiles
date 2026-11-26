@@ -216,7 +216,6 @@ in
     lua-language-server
     vscode-langservers-extracted
     cameractrls-gtk4
-    bitwarden-desktop # password manager (Vaultwarden on the VPS as server)
     gruvboxCursor # replace hyprland cursor with gruvbox themed cursor.
     xhost # let containers open windows
     unstable.claude-code

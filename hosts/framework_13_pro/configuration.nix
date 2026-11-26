@@ -39,6 +39,21 @@ in
   # forces linuxPackages_latest on kernels older than 6.17.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Swap: a file on the LUKS-encrypted ext4 root (no repartitioning needed, and
+  # it is encrypted for free). NixOS creates it on activation. Size is in MiB.
+  swapDevices = [{ device = "/var/lib/swapfile"; size = 36 * 1024; }]; # >= RAM (32G) so hibernate always fits
+  # Hibernate: resume from the swapfile. resume_offset is the file's first
+  # physical extent (`filefrag -v /var/lib/swapfile`); it changes if the file is
+  # ever recreated, so update it then.
+  boot.resumeDevice = "/dev/disk/by-uuid/005c0989-6dd9-4cb9-8685-475043aafe71";
+  boot.kernelParams = [ "resume_offset=247083008" ];
+  # Lid close: suspend, then hibernate after 1h so the battery doesn't drain.
+  services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "1h";
+
+  # Compressed RAM swap in front of it; the disk swap only gets the overflow.
+  zramSwap.enable = true;
+
   # Panther Lake's Arc B390 (8086:b082) is only driven by xe. nixos-hardware
   # defaults to i915 (which would end up in the initrd and never bind).
   hardware.intelgpu.driver = "xe";
